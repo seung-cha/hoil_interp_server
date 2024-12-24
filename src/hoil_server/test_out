@@ -1,0 +1,4 @@
+$decl %a% $real 3;2;+  
+$decl %b% $real %a%;1;+
+
+
