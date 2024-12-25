@@ -1,4 +1,4 @@
-from hoil_utils import HoilExprLexer, VariableTable, Ops
+from hoil_utils import HoilExprLexer, VariableTable, Ops, EvaluateExpr
 from collections import deque
 import typing   
 
@@ -20,38 +20,7 @@ class DType:
         self._val = self._Eval()
 
     def _Eval(self) -> object:
-        stack = deque()
-        lexer = HoilExprLexer(self._expr)
-
-        while True:
-            lex = lexer.GetNextLexeme()
-
-            if lex is None:
-                break
-
-            if lex.isLiteral:
-                stack.append(lex.value)
-            elif lex.isVar:
-                var = self._table.Get(lex.spelling)
-                if var is None: 
-                    # TODO: handle use-of-variable before assignment
-                    raise Exception
-                
-                stack.append(var.Get())
-            elif lex.isOp:
-                var2 = stack.pop()
-                var1 = stack.pop()
-                val = Ops[lex.spelling](var1, var2)
-                
-                stack.append(val)
-        
-        val = stack.pop()
-
-        if len(stack) != 0:
-            # TODO: Raise error on stack not empty after expr
-            raise Exception
-    
-        return val
+        return EvaluateExpr(self._expr, self._table)
     
     def Get(self):
         # TODO: Raise error on use-before-assignment

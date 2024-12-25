@@ -79,12 +79,14 @@ class HoilExprLexer:
     def GetNextLexeme(self) -> typing.Optional[HoilExprLexeme]:
         if len(self._queue) == 0:
             return None
-        
         spelling = self._queue.popleft()
 
         # Extract var
         if spelling[0] == '%':
             return HoilExprLexeme(spelling, isVar= True)
+        
+        if spelling[0] == '"':
+            return HoilExprLexeme(spelling, value= spelling, isLiteral= True)
         
         # Extract number
         if spelling.isnumeric():
@@ -92,10 +94,14 @@ class HoilExprLexer:
         
         # Extract literal (boolean)
         if spelling.isalpha():
+            
             return HoilExprLexeme(spelling, value= True if spelling == 'true' else False, isLiteral= True)
+
 
         return HoilExprLexeme(spelling, isOp= True)
     
+
+
 class VariableTable:
 
     def __init__(self):
@@ -116,10 +122,12 @@ class VariableTable:
             v = scope.Get(var)
             if v is None:
                 continue
-
             return v
         
         return None
+    
+    def GetTempName(self) -> str:
+        return self._stack[len(self.stack) - 1].GetTempName()
 
 
 
@@ -127,11 +135,53 @@ class _VarScope:
     
     def __init__(self):
         self._table = {}
+        self._tempCtr = 0
 
     def Insert(self, var:str, val):
         self._table[var] = val
 
     def Get(self, var:str):
+        if var not in self._table.keys():
+            return None
+        
         return self._table[var]
     
+    def GetTempName(self) -> str:
+        s = f'%_temp{self._tempCtr}_%'
+        self._tempCtr = self._tempCtr + 1
+        return s
+    
 
+def EvaluateExpr(expr, table:VariableTable) -> object:
+    stack = deque()
+    lexer = HoilExprLexer(expr)
+
+    while True:
+        lex = lexer.GetNextLexeme()
+
+        if lex is None:
+            break
+
+        if lex.isLiteral:
+            stack.append(lex.value)
+        elif lex.isVar:
+            var = table.Get(lex.spelling)
+            if var is None: 
+                # TODO: handle use-of-variable before assignment
+                raise Exception
+            
+            stack.append(var.Get())
+        elif lex.isOp:
+            var2 = stack.pop()
+            var1 = stack.pop()
+            val = Ops[lex.spelling](var1, var2)
+            
+            stack.append(val)
+    
+    val = stack.pop()
+
+    if len(stack) != 0:
+        # TODO: Raise error on stack not empty after expr
+        raise Exception
+
+    return val

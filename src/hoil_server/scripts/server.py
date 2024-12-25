@@ -21,8 +21,8 @@ if __name__ == '__main__':
         node.Run()
         node = node.next
 
-    print(varTable.Get('%a%').Get())
-    print(varTable.Get('%b%').Get())
+    print(varTable.Get('%grade%').Get())
+    print(varTable.Get('%result%').Get())
 
 
     
