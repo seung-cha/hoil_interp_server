@@ -145,7 +145,7 @@ class InstructNodeBuilder(ExecNodeBuilder):
         if line[0] != '$instruct':
             return None
 
-        node = InstructNode(self.cntainer, line[1])
+        node = InstructNode(self.container, line[1])
         stack.popleft()
 
         return node
