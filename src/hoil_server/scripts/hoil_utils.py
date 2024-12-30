@@ -102,7 +102,6 @@ class HoilExprLexer:
         return HoilExprLexeme(spelling, isOp= True)
     
 
-
 class VariableTable:
 
     def __init__(self):
@@ -131,7 +130,6 @@ class VariableTable:
         return self._stack[len(self.stack) - 1].GetTempName()
 
 
-
 class _VarScope:
     
     def __init__(self):
@@ -152,6 +150,31 @@ class _VarScope:
         self._tempCtr = self._tempCtr + 1
         return s
     
+
+class InstructTable:
+    def __init__(self):
+        self._in_stmt = []
+        self._out_stmt = []
+    
+    def Insert(self, bytecode: str) -> int:
+        """Insert raw instruct stmt into the array for batch-evaluation.
+        Return index id to retrieve execution code."""
+        self._in_stmt.append(bytecode)
+        return len(self._in_stmt) - 1
+    
+    def Get(self, index: int) -> str:
+        """Get the execution code
+        """
+        return self.out_stmt[index]
+    
+    def Evaluate(self):
+        """
+        Run before execution to evaluate and store instruct stmt into python function
+        """
+        #TODO
+        pass
+
+
 
 def EvaluateExpr(expr, table:VariableTable) -> object:
     stack = deque()
@@ -192,4 +215,5 @@ class ExecVarContainer:
         self.varTable = VariableTable() 
         self.loopStack = deque()
         self.robot = RobotArm()
+        self.instructTable = InstructTable()
     

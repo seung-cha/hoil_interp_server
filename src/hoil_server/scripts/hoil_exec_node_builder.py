@@ -1,5 +1,5 @@
 from hoil_exec_nodes import *
-from hoil_utils import VariableTable, ExecVarContainer
+from hoil_utils import ExecVarContainer
 from collections import deque
 import typing
 import shlex
@@ -134,6 +134,21 @@ class JumpNodeBuilder(ExecNodeBuilder):
             return ContinueNode(self.container)
 
         return None
+    
+class InstructNodeBuilder(ExecNodeBuilder):
+    def __init__(self, container:ExecNodeBuilder):
+        super().__init__(container)
+
+    def Run(self, stack: deque) -> typing.Optional[ExecNode]:
+        line = self.GetLine(stack)
+
+        if line[0] != '$instruct':
+            return None
+
+        node = InstructNode(self.cntainer, line[1])
+        stack.popleft()
+
+        return node
 
 
 
@@ -149,6 +164,7 @@ def _BuildExecNode(stack: deque, container:ExecVarContainer) -> typing.Optional[
     builderList.append(ScopedNodeBuilder(container))
     builderList.append(LoopNodeBuilder(container))
     builderList.append(JumpNodeBuilder(container))
+    builderList.append(InstructNodeBuilder(container))
 
 
     head = EmptyNode(container)

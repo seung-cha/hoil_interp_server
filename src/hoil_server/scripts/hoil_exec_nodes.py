@@ -161,10 +161,12 @@ class ContinueNode(ExecNode):
         return False
         
 class InstructNode(ExecNode):
-    def __init__(self, container: ExecVarContainer):
+    def __init__(self, container: ExecVarContainer, stmt: str):
         super().__init__(container)
+        self.id = self.container.instructTable.Insert(stmt)
 
     def Run(self):
+        # TODO
         pass
 
 
