@@ -1,4 +1,5 @@
 from collections import deque
+from robot import RobotArm 
 import typing
 
 
@@ -185,3 +186,10 @@ def EvaluateExpr(expr, table:VariableTable) -> object:
         raise Exception
 
     return val
+
+class ExecVarContainer:
+    def __init__(self):
+        self.varTable = VariableTable() 
+        self.loopStack = deque()
+        self.robot = RobotArm()
+    

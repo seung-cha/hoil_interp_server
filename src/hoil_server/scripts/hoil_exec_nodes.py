@@ -1,12 +1,12 @@
-from hoil_utils import VariableTable, EvaluateExpr
+from hoil_utils import EvaluateExpr, ExecVarContainer
 from hoil_dtypes import DType
-from collections import deque
 import typing
 
 
 class ExecNode:
-    def __init__(self):
+    def __init__(self, container: ExecVarContainer):
         self.next = None
+        self.container = container
 
     
     def Run(self):
@@ -16,14 +16,13 @@ class ExecNode:
 
 
 class EmptyNode(ExecNode):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
 
 class DeclNode(ExecNode):
-    def __init__(self, table: VariableTable, spelling: str, type:str, expr: typing.Optional[str]):
-        super().__init__()
-        self.table = table
+    def __init__(self, container: ExecVarContainer, spelling: str, type:str, expr: typing.Optional[str]):
+        super().__init__(container)
         self.spelling = spelling
         self.type = type
         self.expr = expr
@@ -31,21 +30,20 @@ class DeclNode(ExecNode):
     def Run(self):
         # TODO: Create different var types based on the supplied type
         var: DType
-        var = self.table.Get(self.spelling)
+        var = self.container.varTable.Get(self.spelling)
 
         if var is not None:
             var.Assign(self.expr)
         else:
             dtype = DType(self.table, self.expr)
-            self.table.Insert(self.spelling, dtype)
+            self.container.varTable.Insert(self.spelling, dtype)
         
         return True
 
 
 class ExprNode(ExecNode):
-    def __init__(self, table: VariableTable, expr: str):
-        super().__init__()
-        self.table = table
+    def __init__(self, container: ExecVarContainer, expr: str):
+        super().__init__(container)
         self.expr = expr
         self.value = None
 
@@ -55,16 +53,16 @@ class ExprNode(ExecNode):
 
         
 class BranchNode(ExecNode):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
         self.ifNode: ConditionalNode
-        self.ifNode = EmptyNode()
+        self.ifNode = EmptyNode(container)
 
         self.elifNodes = []
 
         self.elseNode: ExecNode
-        self.elseNode = EmptyNode()
+        self.elseNode = EmptyNode(container)
 
     def Run(self):
         if self.ifNode.Run():
@@ -79,8 +77,8 @@ class BranchNode(ExecNode):
 
 
 class ConditionalNode(ExecNode):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
         self.condNode:ExprNode
         self.condNode = None
@@ -101,12 +99,11 @@ class ConditionalNode(ExecNode):
 
 
 class ScopedNode(ExecNode):
-    def __init__(self, table:VariableTable):
-        super().__init__()
-        self.table = table
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
         self.node: ExecNode
-        self.node = EmptyNode()
+        self.node = EmptyNode(container)
     
     def Run(self):
         self.table.Push()
@@ -117,25 +114,22 @@ class ScopedNode(ExecNode):
             if node.Run():
                 node = node.next
             else:
-                self.table.Pop()
+                self.container.varTable.Pop()
                 return False
 
-        self.table.Pop()
+        self.container.varTable.Pop()
         return True
     
 class LoopNode(ExecNode):
-    def __init__(self, table:VariableTable, loopStack: deque, condNode: ExprNode, bodyNode: ExecNode):
-        super().__init__()
-        self.table = table
-        self.loopStack = loopStack
-
+    def __init__(self, container: ExecVarContainer, condNode: ExprNode, bodyNode: ExecNode):
+        super().__init__(container)
         self.condNode = condNode
         self.bodyNode = bodyNode
 
         self.shouldBreak = False
 
     def Run(self):
-        self.loopStack.append(self)
+        self.container.loopStack.append(self)
         outcome = False
         while True:
             if self.shouldBreak:
@@ -148,29 +142,27 @@ class LoopNode(ExecNode):
             else:
                 break
         
-        self.loopStack.pop()
+        self.container.loopStack.pop()
         return outcome
 
 class BreakNode(ExecNode):
-    def __init__(self, loopStack: deque):
-        super().__init__()
-        self.loopStack = loopStack
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
     def Run(self):
-        self.loopStack[len(self.loopStack) - 1].shouldBreak = True
+        self.container.loopStack[len(self.loopStack) - 1].shouldBreak = True
         return False
     
 class ContinueNode(ExecNode):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
     def Run(self):
         return False
         
 class InstructNode(ExecNode):
-    def __init__(self, robot):
-        super().__init__()
-        self.robot = robot
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
 
     def Run(self):
         pass
