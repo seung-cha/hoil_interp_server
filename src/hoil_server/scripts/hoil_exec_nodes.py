@@ -1,5 +1,6 @@
 from hoil_utils import VariableTable, EvaluateExpr
 from hoil_dtypes import DType
+from collections import deque
 import typing
 
 
@@ -37,6 +38,8 @@ class DeclNode(ExecNode):
         else:
             dtype = DType(self.table, self.expr)
             self.table.Insert(self.spelling, dtype)
+        
+        return True
 
 
 class ExprNode(ExecNode):
@@ -55,7 +58,7 @@ class BranchNode(ExecNode):
     def __init__(self):
         super().__init__()
 
-        self.ifNode: ExecNode
+        self.ifNode: ConditionalNode
         self.ifNode = EmptyNode()
 
         self.elifNodes = []
@@ -65,14 +68,13 @@ class BranchNode(ExecNode):
 
     def Run(self):
         if self.ifNode.Run():
-            return True
+            return self.ifNode.execOutcome
         
         for elifNode in self.elifNodes:
             if elifNode.Run():
-                return True
+                return elifNode.execOutcome
         
-        self.elseNode.Run()
-        return True
+        return self.elseNode.Run()
 
 
 
@@ -86,13 +88,15 @@ class ConditionalNode(ExecNode):
         self.execNode:ExecNode
         self.execNode = None
 
+        self.execOutcome = False
+
     def Run(self):
         self.condNode.Run()
 
         if not self.condNode.value:
             return False
         
-        self.execNode.Run()
+        self.execOutcome = self.execNode.Run()
         return True
 
 
@@ -106,11 +110,70 @@ class ScopedNode(ExecNode):
     
     def Run(self):
         self.table.Push()
-        self.node.Run()
+
+        node = self.node
+
+        while node is not None:
+            if node.Run():
+                node = node.next
+            else:
+                self.table.Pop()
+                return False
+
         self.table.Pop()
         return True
     
+class LoopNode(ExecNode):
+    def __init__(self, table:VariableTable, loopStack: deque, condNode: ExprNode, bodyNode: ExecNode):
+        super().__init__()
+        self.table = table
+        self.loopStack = loopStack
+
+        self.condNode = condNode
+        self.bodyNode = bodyNode
+
+        self.shouldBreak = False
+
+    def Run(self):
+        self.loopStack.append(self)
+        outcome = False
+        while True:
+            if self.shouldBreak:
+                break
+
+            self.condNode.Run()
+
+            if self.condNode.value:
+                outcome = self.bodyNode.Run()
+            else:
+                break
+        
+        self.loopStack.pop()
+        return outcome
+
+class BreakNode(ExecNode):
+    def __init__(self, loopStack: deque):
+        super().__init__()
+        self.loopStack = loopStack
+
+    def Run(self):
+        self.loopStack[len(self.loopStack) - 1].shouldBreak = True
+        return False
     
+class ContinueNode(ExecNode):
+    def __init__(self):
+        super().__init__()
+
+    def Run(self):
+        return False
+        
+class InstructNode(ExecNode):
+    def __init__(self, robot):
+        super().__init__()
+        self.robot = robot
+
+    def Run(self):
+        pass
 
 
         
