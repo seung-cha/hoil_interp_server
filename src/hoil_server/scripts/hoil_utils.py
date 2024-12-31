@@ -3,7 +3,7 @@ from robot import RobotArm
 import typing
 from openai import OpenAI
 import json
-from gpt_prompt import prompt, res
+from gpt_prompt import prompt
 
 
 

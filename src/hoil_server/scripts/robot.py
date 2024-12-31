@@ -20,22 +20,6 @@ class RobotArm:
         self.gripper_group = moveit_commander.MoveGroupCommander('gripper')
         self.arm_pose = Pose()
 
-        # print(f'Hoil Server:: Initialising robot')
-        # self.InitialiseDemoScene()
-        # self.InitialRobotPose()
-        # print(f'Hoil Server:: Initialisation finished')
-
-        # print(f'Executing node')
-        # self.MoveTo(0.5, 0.0, 0.5)
-        # self.MoveBy(0.0, 0.0, -0.05)
-        # self.CloseGripper()
-        # self.arm_group.pick('obj')
-        # self.MoveBy(0.0, 0.0, 0.05)
-        # self.MoveTo(0.0, 0.5, 0.5)
-        # self.MoveBy(0.0, 0.0, -0.05)
-        # self.OpenGripper()
-        # self.arm_group.place('obj')
-
     def InitialiseDemo(self):
         self.InitialiseDemoScene()
         self.InitialRobotPose()
