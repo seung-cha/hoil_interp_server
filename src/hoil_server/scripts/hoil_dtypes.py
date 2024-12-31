@@ -1,4 +1,4 @@
-from hoil_utils import HoilExprLexer, VariableTable, Ops, EvaluateExpr
+from hoil_utils import VariableTable, EvaluateExpr
 from collections import deque
 import typing   
 
