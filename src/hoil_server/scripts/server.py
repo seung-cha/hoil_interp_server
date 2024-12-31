@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import hoil_utils as HoilUtils
 from hoil_exec_node_builder import BuildExecNode
@@ -17,6 +17,12 @@ class HoilServer:
         self.node = BuildExecNode(data, self.container)
 
         self.container.robot.InitialiseDemo()
+        self.container.instructTable.Evaluate()
+
+        node = self.node
+        while node is not None:
+            node.Run()
+            node = node.next
 
 
 if __name__ == '__main__':

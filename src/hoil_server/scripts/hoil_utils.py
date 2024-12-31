@@ -1,6 +1,10 @@
 from collections import deque
 from robot import RobotArm 
 import typing
+from openai import OpenAI
+import json
+from gpt_prompt import prompt, res
+
 
 
 def _AddOp(var1, var2):
@@ -165,14 +169,71 @@ class InstructTable:
     def Get(self, index: int) -> str:
         """Get the execution code
         """
-        return self.out_stmt[index]
+        return self._out_stmt[index]
     
     def Evaluate(self):
         """
         Run before execution to evaluate and store instruct stmt into python function
         """
-        #TODO
-        pass
+        # Reserve space
+        self._out_stmt = [None] * len(self._in_stmt)
+        cache = dict()
+
+        # Look at cache and find matching pair
+        try:
+            with open('cache.json', 'r') as f:
+                cache: dict
+                cache = json.load(f)
+                
+                removeList = []
+                for i in range(len(self._in_stmt)):
+                    if self._in_stmt[i] in cache.keys():
+                        self._out_stmt[i] = cache[self._in_stmt[i]]
+                        removeList.append(self._in_stmt[i])
+                
+                # Remove all matched in stmts
+                for stmt in removeList:
+                    print(f'InstructTable:: remove: {stmt}')
+                    self._in_stmt.remove(stmt)
+        except Exception as e:
+            print('InstructTable:: Error occurred while reading in cache: ')
+            print(e)
+
+        if len(self._in_stmt) == 0:
+            print('InstructTable:: all hit the cache!')
+            return
+        
+        # Convert the remaining list into json and feed it to gpt
+        dic =  [ {'id': i, 'stmt': self._in_stmt[i]} for i in range(len(self._in_stmt)) ]
+        json_dic = json.dumps(dic)
+
+        client = OpenAI()
+        res = client.chat.completions.create(
+            model= 'gpt-4',
+            messages= [
+                { 'role': 'system',
+                'content': prompt
+                },
+                {
+                    'role': 'user',
+                    'content': json_dic
+                }
+            ]
+        )
+
+        res_dic = json.loads(res.choices[0].message.content)
+        
+        # Append the chatgpt-generated responses to the cache
+        for obj in res_dic:
+            self._out_stmt[obj['id']] = obj['exec']
+            cache[self._in_stmt[obj['id']]] = obj['exec']
+        
+        with open('cache.json', 'w') as f:
+            json.dump(cache, f)
+
+
+    def Warn(self):
+        print('InstructTable:: Warn() is called. Check the instruct stmt to make sure it is logical.')
 
 
 

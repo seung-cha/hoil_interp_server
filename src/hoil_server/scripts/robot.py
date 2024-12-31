@@ -36,8 +36,6 @@ class RobotArm:
         # self.OpenGripper()
         # self.arm_group.place('obj')
 
-        self.MoveBy(0.0, 0.0, 0.05)
-
     def InitialiseDemo(self):
         self.InitialiseDemoScene()
         self.InitialRobotPose()

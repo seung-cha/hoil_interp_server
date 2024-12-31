@@ -166,8 +166,11 @@ class InstructNode(ExecNode):
         self.id = self.container.instructTable.Insert(stmt)
 
     def Run(self):
-        # TODO
-        pass
+        stmt = self.container.instructTable.Get(self.id)
+
+        print(f'Executing stmt: {stmt}')
+        exec(stmt)
+        return True
 
 
         
