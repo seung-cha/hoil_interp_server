@@ -1,12 +1,12 @@
-from hoil_utils import VariableTable, EvaluateExpr
+from hoil_utils import ExecVarContainer, EvaluateExpr
 from collections import deque
 import typing   
 
 class DType:
     
-    def __init__(self, varTable:VariableTable, expr:typing.Optional[str]):
+    def __init__(self, container:ExecVarContainer, expr:typing.Optional[str]):
         self._assigned = False
-        self._table = varTable
+        self._container = container
         self._expr = expr
         self._val = None
 
@@ -20,7 +20,7 @@ class DType:
         self._val = self._Eval()
 
     def _Eval(self) -> object:
-        return EvaluateExpr(self._expr, self._table)
+        return EvaluateExpr(self._expr, self._container)
     
     def Get(self):
         # TODO: Raise error on use-before-assignment

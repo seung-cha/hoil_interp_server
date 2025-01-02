@@ -136,7 +136,7 @@ class JumpNodeBuilder(ExecNodeBuilder):
         return None
     
 class InstructNodeBuilder(ExecNodeBuilder):
-    def __init__(self, container:ExecNodeBuilder):
+    def __init__(self, container:ExecVarContainer):
         super().__init__(container)
 
     def Run(self, stack: deque) -> typing.Optional[ExecNode]:
@@ -149,7 +149,95 @@ class InstructNodeBuilder(ExecNodeBuilder):
         stack.popleft()
 
         return node
+    
+class FunctionNodeBuilder(ExecNodeBuilder):
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
+    
+    def Run(self, stack: deque) -> typing.Optional[ExecNode]:
+        line = self.GetLine(stack)
 
+        if line[0] != '$func_decl':
+            return None
+        
+        funcContainer = ExecVarContainer(
+            self.container.robot, 
+            self.container.instructTable, 
+            self.container.functionMap)
+        
+        # TODO: Parse param
+        ident = line[1]
+        param = []
+        
+        if line[2] == '$param':
+            # No return value, only params
+            param_index = 3
+        else:
+            ret = line[2]
+            param_index = 4
+
+        # add params
+        while param_index < len(line):
+            param_ident = line[param_index]
+
+            if param_index + 1 < len(line) and line[param_index + 1][0] == '$':
+                param_type = line[param_index + 1]
+                param_index += 1
+            else:
+                param_type = None
+            
+            param.append(DeclNode(funcContainer, param_ident, param_type, None))
+            param_index += 1
+
+        stack.popleft()
+
+        node = _BuildExecNode(stack, funcContainer)
+
+        stack.popleft()
+
+        funcNode = FunctionNode(funcContainer, ident, param, node)
+        return funcNode
+
+
+class ReturnNodeBuilder(ExecNodeBuilder):
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
+
+    def Run(self, stack: deque) -> typing.Optional[ExecNode]:
+        line = self.GetLine(stack)
+
+        if line[0] != '$return':
+            return None
+        
+        if len(line) == 1:
+            expr = ''
+        else:
+            expr = line[1]
+
+        node = ReturnNode(self.container, expr)
+        stack.popleft()
+        return node
+
+class CallNodeBuilder(ExecNodeBuilder):
+    def __init__(self, container: ExecVarContainer):
+        super().__init__(container)
+
+    def Run(self, stack: deque) -> typing.Optional[ExecNode]:
+        line = self.GetLine(stack)
+
+        if line[0] != '$call':
+            return None
+        
+        args = []
+
+        if len(line) == 3:
+            args = line[2].split(',')
+
+
+        node = CallNode(self.container, line[1], args)
+        stack.popleft()
+
+        return node
 
 
             
@@ -165,13 +253,17 @@ def _BuildExecNode(stack: deque, container:ExecVarContainer) -> typing.Optional[
     builderList.append(LoopNodeBuilder(container))
     builderList.append(JumpNodeBuilder(container))
     builderList.append(InstructNodeBuilder(container))
+    builderList.append(FunctionNodeBuilder(container))
+    builderList.append(ReturnNodeBuilder(container))
+    builderList.append(CallNodeBuilder(container))
+
+
 
 
     head = EmptyNode(container)
     cur = None
 
     while len(stack) > 0:
-
         print(f'BuildExecNode():: Current stmt: {stack[0]}')
 
         if  stack[0] == '$if_end'        or\
@@ -179,7 +271,8 @@ def _BuildExecNode(stack: deque, container:ExecVarContainer) -> typing.Optional[
             stack[0] == '$else_end'      or\
             stack[0] == '$close_scope'   or\
             stack[0] == '$branch_end'    or\
-            stack[0] == '$while_end':
+            stack[0] == '$while_end'     or\
+            stack[0] == '$func_decl_end':
             return head
 
         builder:ExecNodeBuilder

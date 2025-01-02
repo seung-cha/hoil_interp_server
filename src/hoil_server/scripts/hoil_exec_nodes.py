@@ -35,7 +35,7 @@ class DeclNode(ExecNode):
         if var is not None:
             var.Assign(self.expr)
         else:
-            dtype = DType(self.table, self.expr)
+            dtype = DType(self.container, self.expr)
             self.container.varTable.Insert(self.spelling, dtype)
         
         return True
@@ -48,7 +48,7 @@ class ExprNode(ExecNode):
         self.value = None
 
     def Run(self):
-        self.value = EvaluateExpr(self.expr, self.table)
+        self.value = EvaluateExpr(self.expr, self.container)
         return True
 
         
@@ -106,7 +106,7 @@ class ScopedNode(ExecNode):
         self.node = EmptyNode(container)
     
     def Run(self):
-        self.table.Push()
+        self.container.varTable.Push()
 
         node = self.node
 
@@ -170,6 +170,65 @@ class InstructNode(ExecNode):
 
         print(f'Executing stmt: {stmt}')
         exec(stmt)
+        return True
+    
+class FunctionNode(ExecNode):
+    def __init__(self, container: ExecVarContainer, ident: str, param: list,body: ExecNode):
+        super().__init__(container)
+        self.ident = ident
+        self.returnVal = None
+        self.body = body
+        self.paramNodes = param
+
+        # Register function
+    def Run(self):
+        self.container.functionMap[self.ident] = self
+        return True
+    
+    def Call(self, args):
+
+        self.container.currentFunc = self
+
+        # Push a layer into the table 
+        # To make params temporary decls
+        self.container.varTable.Push()
+
+        # Set args and run
+        for i in range(len(self.paramNodes)):
+            self.paramNodes[i].expr = args[i]
+            self.paramNodes[i].Run()
+
+        
+        self.body.Run()
+
+        self.container.currentFunc = None
+        self.container.varTable.Pop()
+    
+class ReturnNode(ExecNode):
+    def __init__(self, container: ExecVarContainer, expr: str):
+        super().__init__(container)
+        self.expr = expr
+    
+    def Run(self):
+        if self.expr == '':
+            return False
+    
+        self.container.currentFunc.returnVal = EvaluateExpr(self.expr, self.container)
+        return False
+
+
+class CallNode(ExecNode):
+    def __init__(self, container: ExecVarContainer, ident: str, args: list):
+        super().__init__(container)
+        self.ident = ident
+        self.args = args
+        # TODO: Handle args
+    
+    def Run(self):
+        func: FunctionNode
+        func = self.container.functionMap[self.ident]
+        func.Call(self.args)
+
         return True
 
 

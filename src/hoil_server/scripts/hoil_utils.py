@@ -69,12 +69,13 @@ Ops = {
 
 
 class HoilExprLexeme:
-    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False):
+    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False, isFunc= False):
         self.spelling = spelling
         self.value = value
         self.isVar = isVar
         self.isLiteral = isLiteral
         self.isOp = isOp
+        self.isFunc = isFunc
 
 
 class HoilExprLexer:
@@ -92,6 +93,13 @@ class HoilExprLexer:
         
         if spelling[0] == '"':
             return HoilExprLexeme(spelling, value= spelling, isLiteral= True)
+        
+        # Extract func
+        if spelling[0] == '$':
+            s = spelling.split(',')
+            args = s[2 :]
+            # TODO: Parse args
+            return HoilExprLexeme(s[1], value= args, isFunc= True)
         
         # Extract number
         if spelling.isnumeric():
@@ -135,7 +143,6 @@ class VariableTable:
 
 
 class _VarScope:
-    
     def __init__(self):
         self._table = {}
         self._tempCtr = 0
@@ -236,8 +243,30 @@ class InstructTable:
         print('InstructTable:: Warn() is called. Check the instruct stmt to make sure it is logical.')
 
 
+class ExecVarContainer:
+    def __init__(self, robot: RobotArm = None, instructTable: InstructTable = None, functionMap: dict = None):
+        self.varTable = VariableTable() 
+        self.loopStack = deque()
 
-def EvaluateExpr(expr, table:VariableTable) -> object:
+        self.currentFunc = None
+        
+        if functionMap is None:
+            self.functionMap = dict()
+        else:
+            self.functionMap = functionMap
+
+        if robot is None:
+            self.robot = RobotArm()
+        else:
+            self.robot = robot
+
+        if instructTable is None:
+            self.instructTable = InstructTable()
+        else:
+            self.instructTable = instructTable
+
+
+def EvaluateExpr(expr, container: ExecVarContainer) -> object:
     stack = deque()
     lexer = HoilExprLexer(expr)
 
@@ -250,7 +279,7 @@ def EvaluateExpr(expr, table:VariableTable) -> object:
         if lex.isLiteral:
             stack.append(lex.value)
         elif lex.isVar:
-            var = table.Get(lex.spelling)
+            var = container.varTable.Get(lex.spelling)
             if var is None: 
                 # TODO: handle use-of-variable before assignment
                 raise Exception
@@ -262,6 +291,10 @@ def EvaluateExpr(expr, table:VariableTable) -> object:
             val = Ops[lex.spelling](var1, var2)
             
             stack.append(val)
+        elif lex.isFunc:
+            f = container.functionMap[lex.spelling]
+            f.Call(lex.value)
+            stack.append(f.returnVal)
     
     val = stack.pop()
 
@@ -270,11 +303,3 @@ def EvaluateExpr(expr, table:VariableTable) -> object:
         raise Exception
 
     return val
-
-class ExecVarContainer:
-    def __init__(self):
-        self.varTable = VariableTable() 
-        self.loopStack = deque()
-        self.robot = RobotArm()
-        self.instructTable = InstructTable()
-    
