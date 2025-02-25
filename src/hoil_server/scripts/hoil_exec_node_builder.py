@@ -160,10 +160,7 @@ class FunctionNodeBuilder(ExecNodeBuilder):
         if line[0] != '$func_decl':
             return None
         
-        funcContainer = ExecVarContainer(
-            self.container.robot, 
-            self.container.instructTable, 
-            self.container.functionMap)
+        self.container.varTable = self.container.varTable.Isolate()
         
         # TODO: Parse param
         ident = line[1]
@@ -186,16 +183,16 @@ class FunctionNodeBuilder(ExecNodeBuilder):
             else:
                 param_type = None
             
-            param.append(DeclNode(funcContainer, param_ident, param_type, None))
+            param.append(DeclNode(self.container, param_ident, param_type, None))
             param_index += 1
 
         stack.popleft()
 
-        node = _BuildExecNode(stack, funcContainer)
+        node = _BuildExecNode(stack, self.container)
 
         stack.popleft()
 
-        funcNode = FunctionNode(funcContainer, ident, param, node)
+        funcNode = FunctionNode(self.container, ident, param, node)
         return funcNode
 
 
@@ -231,8 +228,33 @@ class CallNodeBuilder(ExecNodeBuilder):
         args = []
 
         if len(line) == 3:
-            args = line[2].split(',')
+            # feed the args manually due to nested function call
+            queue = deque(line[2])
+            arg = ''
+            level = 0
 
+            while len(queue) > 0:
+                if queue[0] == ',' and level == 0:
+                    queue.popleft()
+                    args.append(arg)
+                    arg = ''
+                else:
+                    if queue[0] == '$':
+                        if len(queue) >= 2 and queue[1] == '^':
+                            level -= 1
+                            arg += '$^'
+                            queue.popleft()
+                            queue.popleft()
+                        else:
+                            arg += '$'
+                            level += 1
+                            queue.popleft()
+                    else:
+                        arg += queue[0]
+                        queue.popleft()
+
+            if len(arg) > 0:
+                args.append(arg)
 
         node = CallNode(self.container, line[1], args)
         stack.popleft()

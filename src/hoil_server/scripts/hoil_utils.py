@@ -4,6 +4,7 @@ import typing
 from openai import OpenAI
 import json
 from gpt_prompt import prompt
+from copy import deepcopy
 
 
 
@@ -44,7 +45,7 @@ def _GterOp(var1, var2):
 def _GeqOp(var1, var2):
     return var1 >= var2
 
-def LtenOp(var1, var2):
+def _LtenOp(var1, var2):
     return var1 < var2
 
 def _LeqOp(var1, var2):
@@ -63,7 +64,7 @@ Ops = {
     '!': lambda v1: _NotOp(v1),
     '>': lambda v1, v2: _GterOp(v1, v2),
     '>=': lambda v1, v2: _GeqOp(v1, v2),
-    '<': lambda v1, v2: LtenOp(v1, v2),
+    '<': lambda v1, v2: _LtenOp(v1, v2),
     '<=': lambda v1, v2: _LeqOp(v1, v2),
 }
 
@@ -80,7 +81,89 @@ class HoilExprLexeme:
 
 class HoilExprLexer:
     def __init__(self, expr:str):
-        self._queue = deque(expr.split(';'))
+        self._queue = deque()
+        strQueue = deque(expr)
+        # Tokenise the bytecode
+        # If function block is found, extract the whole content within it
+        # and let the tokeniser split.
+        while len(strQueue) > 0:
+            spelling = ''
+            if strQueue[0] == '$':
+                level = 1
+                spelling += '$'
+                strQueue.popleft()
+
+                while level > 0:
+                    # Special handling for nested function call
+                    if strQueue[0] == '$':
+                        if len(strQueue) >= 2 and strQueue[1] == '^':
+                            level -= 1
+                            spelling += '$^'
+                            strQueue.popleft()
+                            strQueue.popleft()
+                        else:
+                            level += 1
+                            spelling += '$'
+                            strQueue.popleft()
+                    else:
+                        spelling += strQueue.popleft()
+                
+            else:
+                while len(strQueue) > 0 and strQueue[0] != ';':
+                    spelling += strQueue.popleft()
+            
+            if len(strQueue) > 0:   # Remove trailing ';'
+                strQueue.popleft()
+
+            self._queue.append(spelling)
+
+    def _HandleFuncLexeme(self, spelling: str) -> typing.Optional[HoilExprLexeme]:
+        # Assume the bytecode is a well-formed function representation.
+        # Recursively call the function
+        queue = deque(spelling)
+        # HOIL IL function call expr structure:
+        # $,ident,arg1,arg2...$^
+
+        # Remove the preceeding $,
+        queue.popleft()
+        queue.popleft()
+
+        ident = queue.popleft()
+        while queue[0] != ',':
+            ident += queue.popleft()
+
+        queue.popleft()
+        # Handle args (as string).
+        # Manually extract the args due to nested function calls
+        args = []
+        arg = ''
+        level = 0
+        while len(queue) > 0:
+            if queue[0] == ',' and level == 0:
+                queue.popleft()
+                args.append(arg)
+                arg = ''
+            else:
+                if queue[0] == '$':
+                    if len(queue) >= 2 and queue[1] == '^':
+                        level -= 1
+                        queue.popleft()
+                        queue.popleft()
+                    else:
+                        level += 1
+                        queue.popleft()
+                else:
+                    arg += queue.popleft()
+
+
+        
+        args.append(arg)
+        return HoilExprLexeme(ident, value= args, isFunc= True)
+
+
+
+
+
 
     def GetNextLexeme(self) -> typing.Optional[HoilExprLexeme]:
         if len(self._queue) == 0:
@@ -96,10 +179,7 @@ class HoilExprLexer:
         
         # Extract func
         if spelling[0] == '$':
-            s = spelling.split(',')
-            args = s[2 :]
-            # TODO: Parse args
-            return HoilExprLexeme(s[1], value= args, isFunc= True)
+            return self._HandleFuncLexeme(spelling)
         
         # Extract number
         if spelling.isnumeric():
@@ -107,7 +187,6 @@ class HoilExprLexer:
         
         # Extract literal (boolean)
         if spelling.isalpha():
-            
             return HoilExprLexeme(spelling, value= True if spelling == 'true' else False, isLiteral= True)
 
 
@@ -125,6 +204,17 @@ class VariableTable:
     
     def Pop(self):
         self._stack.pop()
+    
+    def Isolate(self):
+        """
+        Create a new isolated scope containing all previous scopes.
+        Use it to create a function
+        """
+        table = VariableTable()
+        for item in self._stack:
+            table._stack.append(item)
+        
+        return table
 
     def Insert(self, var:str, val):
         self._stack[len(self._stack) - 1].Insert(var, val)
@@ -153,7 +243,6 @@ class _VarScope:
     def Get(self, var:str):
         if var not in self._table.keys():
             return None
-        
         return self._table[var]
     
     def GetTempName(self) -> str:
@@ -244,32 +333,34 @@ class InstructTable:
 
 
 class ExecVarContainer:
-    def __init__(self, robot: RobotArm = None, instructTable: InstructTable = None, functionMap: dict = None):
+    def __init__(self, robot: RobotArm = None, instructTable: InstructTable = None, functionMap: dict = None, noROS= False):
         self.varTable = VariableTable() 
         self.loopStack = deque()
-
         self.currentFunc = None
+        self.noROS = noROS
         
         if functionMap is None:
             self.functionMap = dict()
         else:
             self.functionMap = functionMap
-
-        if robot is None:
+        if robot is None and not noROS:
             self.robot = RobotArm()
         else:
             self.robot = robot
+
 
         if instructTable is None:
             self.instructTable = InstructTable()
         else:
             self.instructTable = instructTable
+    
+    def NewScope(self):
+        return ExecVarContainer(robot= self.robot, instructTable= self.instructTable, functionMap= self.functionMap, noROS= self.noROS)
 
 
 def EvaluateExpr(expr, container: ExecVarContainer) -> object:
     stack = deque()
     lexer = HoilExprLexer(expr)
-
     while True:
         lex = lexer.GetNextLexeme()
 
@@ -293,8 +384,10 @@ def EvaluateExpr(expr, container: ExecVarContainer) -> object:
             stack.append(val)
         elif lex.isFunc:
             f = container.functionMap[lex.spelling]
+            f = deepcopy(f)
             f.Call(lex.value)
             stack.append(f.returnVal)
+        
     
     val = stack.pop()
 
