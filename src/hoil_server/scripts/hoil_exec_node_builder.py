@@ -183,7 +183,7 @@ class FunctionNodeBuilder(ExecNodeBuilder):
             else:
                 param_type = None
             
-            param.append(DeclNode(self.container, param_ident, param_type, None))
+            param.append(DeclNode(self.container, param_ident, param_type, None, paramDecl= True))
             param_index += 1
 
         stack.popleft()

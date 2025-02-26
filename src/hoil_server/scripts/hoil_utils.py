@@ -219,8 +219,11 @@ class VariableTable:
     def Insert(self, var:str, val):
         self._stack[len(self._stack) - 1].Insert(var, val)
 
-    def Get(self, var:str):
-        for scope in self._stack:
+    def Get(self, var:str, topLevelOnly= False):
+        if topLevelOnly:
+            return self._stack[len(self._stack) - 1].Get(var)
+            
+        for scope in reversed(self._stack):
             v = scope.Get(var)
             if v is None:
                 continue
@@ -338,6 +341,7 @@ class ExecVarContainer:
         self.loopStack = deque()
         self.currentFunc = None
         self.noROS = noROS
+        self.returnVal = []
         
         if functionMap is None:
             self.functionMap = dict()
@@ -384,9 +388,8 @@ def EvaluateExpr(expr, container: ExecVarContainer) -> object:
             stack.append(val)
         elif lex.isFunc:
             f = container.functionMap[lex.spelling]
-            f = deepcopy(f)
             f.Call(lex.value)
-            stack.append(f.returnVal)
+            stack.append(container.returnVal.pop())
         
     
     val = stack.pop()

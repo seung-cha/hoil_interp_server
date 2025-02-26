@@ -1,6 +1,7 @@
 from hoil_utils import EvaluateExpr, ExecVarContainer
 from hoil_dtypes import DType
 import typing
+from copy import deepcopy
 
 
 class ExecNode:
@@ -32,16 +33,17 @@ class EmptyNode(ExecNode):
 
 
 class DeclNode(ExecNode):
-    def __init__(self, container: ExecVarContainer, spelling: str, type:str, expr: typing.Optional[str]):
+    def __init__(self, container: ExecVarContainer, spelling: str, type:str, expr: typing.Optional[str], paramDecl= False):
         super().__init__(container)
         self.spelling = spelling
         self.type = type
         self.expr = expr
-
+        self.paramDecl = paramDecl
     def Run(self):
         # TODO: Create different var types based on the supplied type
         var: DType
-        var = self.container.varTable.Get(self.spelling)
+        # If paramdecl, it needs to be declared regardless (on the top stack)
+        var = self.container.varTable.Get(self.spelling, topLevelOnly= self.paramDecl)
 
         if var is not None:
             var.Assign(self.expr)
@@ -187,7 +189,6 @@ class FunctionNode(ExecNode):
     def __init__(self, container: ExecVarContainer, ident: str, param: list, body: ExecNode):
         super().__init__(container)
         self.ident = ident
-        self.returnVal = None
         self.body = body
         self.paramNodes = param
 
@@ -200,16 +201,15 @@ class FunctionNode(ExecNode):
         prevFunc = self.container.currentFunc
         self.container.currentFunc = self
 
+
         # Push a layer into the table 
         # To make params temporary decls
         self.container.varTable.Push()
-
         # Set args and run
         for i in range(len(self.paramNodes)):
             self.paramNodes[i].expr = args[i]
             self.paramNodes[i].Run()
 
-        
         self.body.Run()
 
         self.container.currentFunc = prevFunc
@@ -234,8 +234,7 @@ class ReturnNode(ExecNode):
         if self.expr == '':
             return False
         
-        self.container.currentFunc.returnVal = EvaluateExpr(self.expr, self.container)
-
+        self.container.returnVal.append(EvaluateExpr(self.expr, self.container))
         return False
 
 
@@ -249,6 +248,9 @@ class CallNode(ExecNode):
         func: FunctionNode
         func = self.container.functionMap[self.ident]
         func.Call(self.args)
+
+        if len(self.container.returnVal) > 0:
+            self.container.returnVal.pop()
         return True
 
 

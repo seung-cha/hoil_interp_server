@@ -32,7 +32,6 @@ class HoilServer:
             node.Run()
             node = node.next
 
-
     def Print(self, container: HoilUtils.ExecVarContainer):
         """Native function. Print text to the screen."""
         s: DType
