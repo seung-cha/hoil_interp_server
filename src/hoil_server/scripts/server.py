@@ -23,6 +23,14 @@ class HoilServer:
         # Insert functions
         FunctionNode.MakeFunction(self.container, 'Print', ['text'],\
                                   NativeNode(self.container, self.Print))
+        
+        FunctionNode.MakeFunction(self.container, 'MoveTo', ['x', 'y', 'z'],\
+                                  NativeNode(self.container, self.MoveTo))
+        
+        FunctionNode.MakeFunction(self.container, 'MoveBy', ['x', 'y', 'z'],\
+                                  NativeNode(self.container, self.MoveTo))
+        
+        
         #self.container.robot.InitialiseDemo()
         self.container.instructTable.Evaluate()
         print('Executing...')
@@ -33,10 +41,33 @@ class HoilServer:
             node = node.next
 
     def Print(self, container: HoilUtils.ExecVarContainer):
-        """Native function. Print text to the screen."""
+        """Native function. Print %text% to the screen."""
         s: DType
         s = container.varTable.Get('%text%')
         print(s.Get())
+
+    def MoveTo(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Move arm to %x%, %y%, %z%"""
+        x: DType
+        y: DType
+        z: DType
+        x = container.varTable.Get("%x%")
+        y = container.varTable.Get("%y%")
+        z = container.varTable.Get("%z%")
+
+        container.robot.MoveTo(x.Get(), y.Get(), z.Get())
+
+    def MoveTo(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Move arm to %x%, %y%, %z%"""
+        x: DType
+        y: DType
+        z: DType
+        x = container.varTable.Get("%x%")
+        y = container.varTable.Get("%y%")
+        z = container.varTable.Get("%z%")
+
+        container.robot.MoveBy(x.Get(), y.Get(), z.Get())
+
 
 
 

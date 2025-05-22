@@ -50,7 +50,10 @@ class BranchNodeBuilder(ExecNodeBuilder):
             if line[0] == '$if' or line[0] == '$elif':
                 condNode = ConditionalNode(self.container)
 
-                cond = ExprNode(self.container, line[1])
+                if line[1] == '$instruct':
+                    cond = InstructNode(self.container, line[2])
+                else:
+                    cond = ExprNode(self.container, line[1])
                 stack.popleft()
 
                 # Will always terminate upon '$*_end'
@@ -104,16 +107,21 @@ class LoopNodeBuilder(ExecNodeBuilder):
 
         if line[0] != '$while':
             return None
-    
-        cond = ExprNode(self.container, 'true')
 
-        if len(line) == 2:
-            cond = ExprNode(self.container, line[1])
+        if line[1] == '$instruct':
+            cond = InstructNode(self.container, line[2])
+        else:
+
+            cond = ExprNode(self.container, 'true')
+
+            if len(line) == 2:
+                cond = ExprNode(self.container, line[1])
     
         stack.popleft()
 
         body = _BuildExecNode(stack, self.container)
 
+        # Pop $while_end
         stack.popleft()
 
         return LoopNode(self.container, cond, body)

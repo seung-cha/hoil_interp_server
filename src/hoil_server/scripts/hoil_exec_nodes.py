@@ -177,6 +177,7 @@ class InstructNode(ExecNode):
     def __init__(self, container: ExecVarContainer, stmt: str):
         super().__init__(container)
         self.id = self.container.instructTable.Insert(stmt)
+        self.value = None
 
     def Run(self):
         stmt = self.container.instructTable.Get(self.id)

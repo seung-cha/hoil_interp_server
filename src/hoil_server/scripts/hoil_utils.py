@@ -182,8 +182,11 @@ class HoilExprLexer:
             return self._HandleFuncLexeme(spelling)
         
         # Extract number
-        if spelling.isnumeric():
-            return HoilExprLexeme(spelling, value= float(spelling), isLiteral= True)
+        try:
+            v = float(spelling)
+            return HoilExprLexeme(spelling, value= v, isLiteral= True)
+        except:
+            pass
         
         # Extract literal (boolean)
         if spelling.isalpha():
@@ -220,6 +223,7 @@ class VariableTable:
         self._stack[len(self._stack) - 1].Insert(var, val)
 
     def Get(self, var:str, topLevelOnly= False):
+        # Returns DType
         if topLevelOnly:
             return self._stack[len(self._stack) - 1].Get(var)
             

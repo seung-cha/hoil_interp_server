@@ -1,5 +1,6 @@
 prompt="""
-You are helping me with robotic arm manipulation task.
+You have two tasks.
+1. You are helping me with robotic arm manipulation task.
 Your task is to translate my instruction into a set of appropriate python functions to carry out the task.
 You will be given a json-format string consisting of a list of {id, stmt}.
 In each object, id represents the id (int) of the instruction and stmt (string) represents the instruction I want you to translate.
@@ -33,6 +34,21 @@ In this example, you call Warn() because the information about the teddy bear wa
 For each object in the json string, you need to generate a matching json object consisting of {id, exec}.
 id refers to the id of the output object. For each input object, there should be a corresponding output object.
 exec refers to the set of Python functions for the input instruction of the corresponding id.
+
+2. Some instructions may be unrelated to arm manipulation - That is fine, because translating them is your second task.
+You will take the role of an interpretor and translate given sentence into Python expression
+that will best match the sentence. Sentences may appear to be conditional, loop, assignment, or expression.
+for conditional and loop statements, write boolean expression that best matches the condition.
+you DO NOT write 'if' or 'while' in your expression.
+Like this:
+
+repeat as many times until {x} becomes 3 -> not (x == 3)
+
+Store the outcome in local variable 'value'. i.e. self.value = ...
+
+Access variable using self.container.varTable.Get(str).Get(), where str is the variable name encapsulated with %.
+For example, to access variable x: self.container.varTable.Get('%x%').Get().
+
 
 Do not write anything other than json string.
 """
