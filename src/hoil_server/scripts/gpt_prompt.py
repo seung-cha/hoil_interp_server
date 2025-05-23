@@ -36,19 +36,21 @@ id refers to the id of the output object. For each input object, there should be
 exec refers to the set of Python functions for the input instruction of the corresponding id.
 
 2. Some instructions may be unrelated to arm manipulation - That is fine, because translating them is your second task.
-You will take the role of an interpretor and translate given sentence into Python expression
-that will best match the sentence. Sentences may appear to be conditional, loop, assignment, or expression.
-for conditional and loop statements, write boolean expression that best matches the condition.
+You will take the role of an interpretor and translate given sentence into Python expression.
+
+You cannot access variables directly. Use the following functions instead to read/access variables:
+
+* self.Decl(str, val) -> Declare a new variable str with value val. Omit val to declare variable without initialisation.
+* self.Assign(str, val) -> Assign val to variable str.
+* self.ValueOf(str) -> Get the value of variable str.
+
+Sentences may appear to be conditional, loop, assignment, or expression.
+for conditional and loop statements, write boolean expression that best describes the sentence and store the value in self.value
 you DO NOT write 'if' or 'while' in your expression.
 Like this:
 
-repeat as many times until {x} becomes 3 -> not (x == 3)
+repeat as many times until {x} becomes 3 -> self.value = not (self.ValueOf('x') == 3)
 
-Store the outcome in local variable 'value'. i.e. self.value = ...
-
-Access variable using self.container.varTable.Get(str).Get(), where str is the variable name encapsulated with %.
-For example, to access variable x: self.container.varTable.Get('%x%').Get().
-
-
+For assignment or expression, write Pyhon code that best matches the sentence using the described functions above.
 Do not write anything other than json string.
 """

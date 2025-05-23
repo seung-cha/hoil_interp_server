@@ -223,7 +223,6 @@ class VariableTable:
         self._stack[len(self._stack) - 1].Insert(var, val)
 
     def Get(self, var:str, topLevelOnly= False):
-        # Returns DType
         if topLevelOnly:
             return self._stack[len(self._stack) - 1].Get(var)
             

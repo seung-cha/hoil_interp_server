@@ -44,7 +44,6 @@ class DeclNode(ExecNode):
         var: DType
         # If paramdecl, it needs to be declared regardless (on the top stack)
         var = self.container.varTable.Get(self.spelling, topLevelOnly= self.paramDecl)
-
         if var is not None:
             var.Assign(self.expr)
         else:
@@ -176,15 +175,42 @@ class ContinueNode(ExecNode):
 class InstructNode(ExecNode):
     def __init__(self, container: ExecVarContainer, stmt: str):
         super().__init__(container)
+        self.stmt = stmt
         self.id = self.container.instructTable.Insert(stmt)
         self.value = None
 
     def Run(self):
-        stmt = self.container.instructTable.Get(self.id)
+        python_code = self.container.instructTable.Get(self.id)
 
-        print(f'Executing stmt: {stmt}')
-        exec(stmt)
+        print(f'Executing stmt: {python_code} ({self.stmt})')
+        exec(python_code)
         return True
+    
+    # Used to declare variable
+    # TODO: Modulate. current code copied from DeclNode.Run()
+    def Decl(self, spelling: str, val= None):
+        var: DType
+        var = self.container.varTable.Get(f'%{spelling}%', topLevelOnly= False)
+
+        if var is not None:
+            var.AssignValue(val)
+        else:
+            dtype = DType(self.container, expr= None)
+            self.container.varTable.Insert(spelling, dtype)
+
+    # Used to set variable
+    # Identical to Decl(). Exists for LLM
+    def Assign(self, spelling: str, val):
+        self.Decl(spelling, val)
+
+    # Used to get value.
+    # Assumes variable is declared and is not mangled
+    def ValueOf(self, spelling: str):
+        return self.container.varTable.Get(f'%{spelling}%').Get()
+
+
+    
+
     
 class FunctionNode(ExecNode):
     def __init__(self, container: ExecVarContainer, ident: str, param: list, body: ExecNode):

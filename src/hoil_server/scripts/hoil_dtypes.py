@@ -16,9 +16,20 @@ class DType:
 
 
     def Assign(self, expr:str):
+        """
+        Assign value by evaluating HOIL bytecode
+        """
         self._expr = expr
         self._assigned = True
         self._val = self._Eval()
+
+    def AssignValue(self, val):
+        """
+        Directly set the value. Useful for LLM-based writing
+        """
+        if val is not None:
+            self._assigned = True
+        self._val = val
 
     def _Eval(self) -> object:
         return EvaluateExpr(self._expr, self._container)
