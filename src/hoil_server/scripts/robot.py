@@ -20,6 +20,15 @@ class RobotArm:
         self.gripper_group = moveit_commander.MoveGroupCommander('gripper')
         self.arm_pose = Pose()
 
+        self.InitialiseDemo()
+        print(self.arm_group.get_planning_frame())
+        print(self.arm_group.get_end_effector_link())
+        print(self.robot.get_group_names())
+        print(self.arm_group.get_current_joint_values())
+        print(self.robot.get_joint_names('arm'))
+
+
+
     def InitialiseDemo(self):
         self.InitialiseDemoScene()
         self.InitialRobotPose()
@@ -33,16 +42,24 @@ class RobotArm:
         p.orientation.y = q[1]
         p.orientation.z = q[2]
         p.orientation.w = q[3]
-        p.position.x = 0.0
-        p.position.y = 0.5
+        p.position.x = 0.5
+        p.position.y = 0.0
         p.position.z = 0.5
 
         self.arm_pose = p
         self.arm_group.set_pose_target(self.arm_pose)
         self.arm_group.go(wait= True)
         self.arm_group.clear_pose_targets()
+
         self.OpenGripper()
-        return p
+
+        # Rotate the arm gripper
+        g = self.arm_group.get_current_joint_values()
+        g[5] = -1.57 # list of len = 6, last index is the rotation of the gripper
+
+        self.arm_group.go(g, wait= True)
+
+        return self.arm_pose
     
     def MoveBy(self, x, y, z, wait= True):
         """Add x, y, z to current position"""
@@ -91,12 +108,14 @@ class RobotArm:
     def InitialiseDemoScene(self):
         self.scene.clear()
 
+        # Right in front
         tablePose = PoseStamped()
         tablePose.header.frame_id = 'root'
         tablePose.pose.position.x = 0.5
         tablePose.pose.position.y = 0.0
         tablePose.pose.position.z = 0.2
 
+        # Left
         tablePose2 = PoseStamped()
         tablePose2.header.frame_id = 'root'
         tablePose2.pose.position.x = 0.0
@@ -105,8 +124,8 @@ class RobotArm:
 
         objPose = PoseStamped()
         objPose.header.frame_id = 'root'
-        objPose.pose.position.x = 0.5
-        objPose.pose.position.y = 0.0
+        objPose.pose.position.x = 0.0
+        objPose.pose.position.y = 0.5
         objPose.pose.position.z = 0.4
 
 

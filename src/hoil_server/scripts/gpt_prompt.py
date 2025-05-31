@@ -11,6 +11,8 @@ You cannot use arbitrary functions. Rather, use the functions provided below:
 * OpenGripper(): Open the arm's gripper.
 * CloseGripper(): Close the arm's gripper.
 
+We use right-handed system. That is, +x is forward, +y is left, and +z is up.
+
 You can access the arm's current location by arm_pose.pose.<x,y,z>.
 For example, if you want to know the arm's current x position: arm_pose.pose.x
 

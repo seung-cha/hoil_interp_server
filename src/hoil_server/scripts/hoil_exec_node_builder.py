@@ -31,6 +31,20 @@ class DeclNodeBuilder(ExecNodeBuilder):
             return DeclNode(self.container, line[1], line[2], None)
 
 
+class InsertNodeBuilder(ExecNodeBuilder):
+    def __init__(self, container:ExecVarContainer):
+        super().__init__(container)
+
+    def Run(self, stack:deque) -> typing.Optional[ExecNode]:
+        line = self.GetLine(stack)
+        if line[0] != '$insert':
+            return None
+        
+        stack.popleft()
+
+        return InsertNode(self.container, line[1], line[2], line[3])
+
+
 class BranchNodeBuilder(ExecNodeBuilder):
     def __init__(self, container:ExecVarContainer):
         super().__init__(container)
@@ -278,6 +292,7 @@ def _BuildExecNode(stack: deque, container:ExecVarContainer) -> typing.Optional[
     
     builderList = list()
     builderList.append(DeclNodeBuilder(container))
+    builderList.append(InsertNodeBuilder(container))
     builderList.append(BranchNodeBuilder(container))
     builderList.append(ScopedNodeBuilder(container))
     builderList.append(LoopNodeBuilder(container))

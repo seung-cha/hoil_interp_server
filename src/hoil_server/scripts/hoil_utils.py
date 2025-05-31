@@ -70,13 +70,14 @@ Ops = {
 
 
 class HoilExprLexeme:
-    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False, isFunc= False):
+    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False, isFunc= False, isArr= False):
         self.spelling = spelling
         self.value = value
         self.isVar = isVar
         self.isLiteral = isLiteral
         self.isOp = isOp
         self.isFunc = isFunc
+        self.isArr = isArr
 
 
 class HoilExprLexer:
@@ -160,7 +161,32 @@ class HoilExprLexer:
         args.append(arg)
         return HoilExprLexeme(ident, value= args, isFunc= True)
 
+    def _HandleArrLexeme(self, spelling: str):
+        # Arr structure:
+        # $a,ident,index,expr$^
+        queue = deque(spelling)
 
+        # Remove the preceeding $a,
+        queue.popleft()
+        queue.popleft()
+        queue.popleft()
+
+        ident = ''
+        while queue[0] != ',':
+            ident += queue.popleft()
+        queue.popleft()
+
+        index = ''
+        while queue[0] != '$':
+            index += queue.popleft()
+
+        # Pop $^
+        queue.popleft()
+        queue.popleft()
+
+        return HoilExprLexeme(ident, value= index, isArr= True)
+
+        
 
 
 
@@ -177,8 +203,11 @@ class HoilExprLexer:
         if spelling[0] == '"':
             return HoilExprLexeme(spelling, value= spelling, isLiteral= True)
         
-        # Extract func
-        if spelling[0] == '$':
+        # Extract func ($) or array ($,)
+
+        if spelling[0] == '$' and spelling[1] == 'a':
+            return self._HandleArrLexeme(spelling)
+        elif spelling[0] == '$':
             return self._HandleFuncLexeme(spelling)
         
         # Extract number
@@ -366,6 +395,7 @@ class ExecVarContainer:
 
 
 def EvaluateExpr(expr, container: ExecVarContainer) -> object:
+
     stack = deque()
     lexer = HoilExprLexer(expr)
     while True:
@@ -380,7 +410,7 @@ def EvaluateExpr(expr, container: ExecVarContainer) -> object:
             var = container.varTable.Get(lex.spelling)
             if var is None: 
                 # TODO: handle use-of-variable before assignment
-                raise Exception
+                raise Exception(f"Use of variable before assignment! ${lex.spelling}")
             
             stack.append(var.Get())
         elif lex.isOp:
@@ -393,6 +423,11 @@ def EvaluateExpr(expr, container: ExecVarContainer) -> object:
             f = container.functionMap[lex.spelling]
             f.Call(lex.value)
             stack.append(container.returnVal.pop())
+        elif lex.isArr:
+            arr = container.varTable.Get(lex.spelling).Get()
+            val = arr[EvaluateExpr(lex.value, container)]
+            stack.append(val)
+            
         
     
     val = stack.pop()

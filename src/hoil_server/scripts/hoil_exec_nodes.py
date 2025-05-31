@@ -39,6 +39,7 @@ class DeclNode(ExecNode):
         self.type = type
         self.expr = expr
         self.paramDecl = paramDecl
+
     def Run(self):
         # TODO: Create different var types based on the supplied type
         var: DType
@@ -48,9 +49,30 @@ class DeclNode(ExecNode):
             var.Assign(self.expr)
         else:
             dtype = DType(self.container, self.expr)
+
+            # If array, initialise dict
+            if self.type == '$array':
+                dtype.AssignValue(dict())
+
             self.container.varTable.Insert(self.spelling, dtype)
         
         return True
+    
+
+class InsertNode(ExecNode):
+    """Variant of DeclNode, for inserting values in array."""
+    def __init__(self, container: ExecVarContainer, ident: str, index:str, expr:str):
+        self.container = container
+        self.ident = ident
+        self.index = index
+        self.expr = expr
+
+    def Run(self):
+        index = EvaluateExpr(self.index, self.container)
+        expr = EvaluateExpr(self.expr, self.container)
+
+        self.container.varTable.Get(self.ident).Get()[index] = expr
+    
 
 
 class ExprNode(ExecNode):
