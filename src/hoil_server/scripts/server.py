@@ -91,19 +91,27 @@ class HoilServer:
         obj: DType
         obj = container.varTable.Get('%obj%')
 
-        container.robot.arm_group.attach_object(obj.Get().id)
+        # TODO: Specify type in llm-based function calling so it doesnt confuse obj with str
+        if isinstance(obj.Get(), str):
+            obj = container.varTable.Get(f'%{obj.Get()}%')
+
         container.robot.CloseGripper()
+        container.robot.arm_group.attach_object(obj.Get().id)
 
     def Release(self, container: HoilUtils.ExecVarContainer):
         """Native function. Release the gripper and detach_object"""
-        container.robot.arm_group.detach_object()
         container.robot.OpenGripper()
+        container.robot.arm_group.detach_object()
 
     def PositionOf(self, container: HoilUtils.ExecVarContainer):
         """Native function. Get the position of object"""
         obj: DType
         obj = container.varTable.Get('%obj%')
 
+        # TODO: Specify type in llm-based function calling so it doesnt confuse obj with str
+        if isinstance(obj.Get(), str):
+            obj = container.varTable.Get(f'%{obj.Get()}%')
+        
         # HOIL array is internally a dict() for now.
         # TODO: Refactor returnVal
         self.container.returnVal.append(

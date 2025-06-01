@@ -43,6 +43,9 @@ class DeclNode(ExecNode):
         # If true, assign value with AssignValue() instead of Assign(). Used for param decl in llm-based function calling
         self.directAssignment = directAssignment
 
+    def __str__(self):
+        return self.spelling.strip('%')
+
     def Run(self):
         # TODO: Create different var types based on the supplied type
         var: DType
@@ -63,6 +66,7 @@ class DeclNode(ExecNode):
             self.container.varTable.Insert(self.spelling, dtype)
         
         return True
+
     
 
 class InsertNode(ExecNode):
@@ -222,8 +226,8 @@ class InstructNode(ExecNode):
         if var is not None:
             var.AssignValue(val)
         else:
-            dtype = DType(self.container, expr= None)
-            self.container.varTable.Insert(spelling, dtype)
+            dtype = DType(self.container, expr= val, directAssignment= True)
+            self.container.varTable.Insert(f'%{spelling}%', dtype)
 
     # Used to set variable
     # Identical to Decl(). Exists for LLM
@@ -237,7 +241,7 @@ class InstructNode(ExecNode):
     
     # Call function (non-mangled spelling) with params
     def Call(self, spelling: str, args):
-        self.container.functionMap[f'%spelling%'].Call(args, directAssignment= True)
+        self.container.functionMap[f'%{spelling}%'].Call(args, directAssignment= True)
         ret = None
 
         # If the function returns something, get the value
@@ -256,6 +260,11 @@ class FunctionNode(ExecNode):
         self.ident = ident
         self.body = body
         self.paramNodes = param
+
+        self.container.instructTable.InsertFunction(self)
+
+    def __str__(self):
+        return self.ident.strip('%')
 
         # Register function
     def Run(self):

@@ -288,8 +288,12 @@ class _VarScope:
 
 class InstructTable:
     def __init__(self):
+        self._func = []
         self._in_stmt = []
         self._out_stmt = []
+
+    def InsertFunction(self, function):
+        self._func.append(function)
     
     def Insert(self, bytecode: str) -> int:
         """Insert raw instruct stmt into the array for batch-evaluation.
@@ -330,10 +334,17 @@ class InstructTable:
             print('InstructTable:: Error occurred while reading in cache: ')
             print(e)
 
+
         if len(self._in_stmt) == 0:
             print('InstructTable:: all hit the cache!')
             return
-        
+
+        # Construct function description
+        func_desc = [ {'name': str(function), 'params':  ', '.join(map(str, function.paramNodes)) } for function in self._func ]
+        func_desc_json = json.dumps(func_desc)
+        #print(prompt + func_desc_json)
+
+
         # Convert the remaining list into json and feed it to gpt
         dic =  [ {'id': i, 'stmt': self._in_stmt[i]} for i in range(len(self._in_stmt)) ]
         json_dic = json.dumps(dic)
@@ -343,7 +354,7 @@ class InstructTable:
             model= 'gpt-4',
             messages= [
                 { 'role': 'system',
-                'content': prompt
+                'content': prompt + func_desc_json
                 },
                 {
                     'role': 'user',
