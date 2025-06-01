@@ -5,11 +5,12 @@ import re
 
 class DType:
     
-    def __init__(self, container:ExecVarContainer, expr= None, paramDecl= False):
+    def __init__(self, container:ExecVarContainer, expr= None, paramDecl= False, directAssignment= False):
         self._assigned = False
         self._container = container
         self._expr = expr
         self._val = None
+        self._directAssignment = directAssignment
 
 
         # If true, subsequent Assign is ignored.
@@ -17,7 +18,10 @@ class DType:
         self.fixed = False
 
         if self._expr is not None and not paramDecl:
-            self.Assign(self._expr)
+            if self._directAssignment:
+                self.AssignValue(self._expr)
+            else:
+                self.Assign(self._expr)
 
 
     def Assign(self, expr:str):

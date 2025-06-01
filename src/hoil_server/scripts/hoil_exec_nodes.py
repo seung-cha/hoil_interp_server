@@ -33,12 +33,15 @@ class EmptyNode(ExecNode):
 
 
 class DeclNode(ExecNode):
-    def __init__(self, container: ExecVarContainer, spelling: str, type:str, expr: typing.Optional[str], paramDecl= False):
+    def __init__(self, container: ExecVarContainer, spelling: str, type:str, expr: typing.Optional[str], paramDecl= False, directAssignment= False):
         super().__init__(container)
         self.spelling = spelling
         self.type = type
         self.expr = expr
         self.paramDecl = paramDecl
+
+        # If true, assign value with AssignValue() instead of Assign(). Used for param decl in llm-based function calling
+        self.directAssignment = directAssignment
 
     def Run(self):
         # TODO: Create different var types based on the supplied type
@@ -46,9 +49,12 @@ class DeclNode(ExecNode):
         # If paramdecl, it needs to be declared regardless (on the top stack)
         var = self.container.varTable.Get(self.spelling, topLevelOnly= self.paramDecl)
         if var is not None:
-            var.Assign(self.expr)
+            if self.directAssignment:
+                var.AssignValue(self.expr)
+            else:
+                var.Assign(self.expr)
         else:
-            dtype = DType(self.container, self.expr)
+            dtype = DType(self.container, self.expr, directAssignment= self.directAssignment)
 
             # If array, initialise dict
             if self.type == '$array' and self.expr is None:
@@ -228,6 +234,17 @@ class InstructNode(ExecNode):
     # Assumes variable is declared and is not mangled
     def ValueOf(self, spelling: str):
         return self.container.varTable.Get(f'%{spelling}%').Get()
+    
+    # Call function (non-mangled spelling) with params
+    def Call(self, spelling: str, args):
+        self.container.functionMap[f'%spelling%'].Call(args, directAssignment= True)
+        ret = None
+
+        # If the function returns something, get the value
+        if len(self.container.returnVal) > 0:
+            ret = self.container.returnVal.pop()
+
+        return ret
 
 
     
@@ -245,7 +262,7 @@ class FunctionNode(ExecNode):
         self.container.functionMap[self.ident] = self
         return True
     
-    def Call(self, args):
+    def Call(self, args, directAssignment= False):
         prevFunc = self.container.currentFunc
         self.container.currentFunc = self
 
@@ -255,8 +272,9 @@ class FunctionNode(ExecNode):
         self.container.varTable.Push()
         # Set args and run
         for i in range(len(self.paramNodes)):
-            self.paramNodes[i].expr = args[i]
-            self.paramNodes[i].Run()
+                self.paramNodes[i].directAssignment = directAssignment
+                self.paramNodes[i].expr = args[i]
+                self.paramNodes[i].Run()
 
         self.body.Run()
 
