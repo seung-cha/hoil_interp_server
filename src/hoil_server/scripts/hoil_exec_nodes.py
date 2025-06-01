@@ -51,7 +51,7 @@ class DeclNode(ExecNode):
             dtype = DType(self.container, self.expr)
 
             # If array, initialise dict
-            if self.type == '$array':
+            if self.type == '$array' and self.expr is None:
                 dtype.AssignValue(dict())
 
             self.container.varTable.Insert(self.spelling, dtype)
@@ -72,7 +72,6 @@ class InsertNode(ExecNode):
         expr = EvaluateExpr(self.expr, self.container)
 
         self.container.varTable.Get(self.ident).Get()[index] = expr
-    
 
 
 class ExprNode(ExecNode):

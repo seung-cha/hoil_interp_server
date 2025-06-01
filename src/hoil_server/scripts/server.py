@@ -6,6 +6,8 @@ import sys
 from hoil_exec_nodes import FunctionNode, NativeNode
 from hoil_dtypes import DType
 
+from robot import SceneObject
+
 
 class HoilServer:
 
@@ -17,7 +19,7 @@ class HoilServer:
             data = f.read()
 
 
-        self.container = HoilUtils.ExecVarContainer(noROS= True)
+        self.container = HoilUtils.ExecVarContainer(noROS= False)
         self.node = BuildExecNode(data, self.container)
 
         # Insert functions
@@ -28,8 +30,24 @@ class HoilServer:
                                   NativeNode(self.container, self.MoveTo))
         
         FunctionNode.MakeFunction(self.container, 'MoveBy', ['x', 'y', 'z'],\
-                                  NativeNode(self.container, self.MoveTo))
+                                  NativeNode(self.container, self.MoveBy))
         
+        FunctionNode.MakeFunction(self.container, 'Grab', ['obj'],\
+                                  NativeNode(self.container, self.Grab))
+        
+        FunctionNode.MakeFunction(self.container, 'Release', [],\
+                                  NativeNode(self.container, self.Release))
+        
+        FunctionNode.MakeFunction(self.container, 'PositionOf', ['obj'],\
+                                  NativeNode(self.container, self.PositionOf))
+        
+
+        obj = DType(self.container)
+        obj.fixed = True
+        obj.AssignValue(SceneObject(id= 'obj', x= 0.0, y= 0.5, z= 0.4))
+        self.container.varTable.Insert('%cube%', obj)
+
+
         
         #self.container.robot.InitialiseDemo()
         self.container.instructTable.Evaluate()
@@ -57,7 +75,7 @@ class HoilServer:
 
         container.robot.MoveTo(x.Get(), y.Get(), z.Get())
 
-    def MoveTo(self, container: HoilUtils.ExecVarContainer):
+    def MoveBy(self, container: HoilUtils.ExecVarContainer):
         """Native function. Move arm to %x%, %y%, %z%"""
         x: DType
         y: DType
@@ -67,6 +85,33 @@ class HoilServer:
         z = container.varTable.Get("%z%")
 
         container.robot.MoveBy(x.Get(), y.Get(), z.Get())
+
+    def Grab(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Close the gripper and call attach_object internally"""
+        obj: DType
+        obj = container.varTable.Get('%obj%')
+
+        container.robot.arm_group.attach_object(obj.Get().id)
+        container.robot.CloseGripper()
+
+    def Release(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Release the gripper and detach_object"""
+        container.robot.arm_group.detach_object()
+        container.robot.OpenGripper()
+
+    def PositionOf(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Get the position of object"""
+        obj: DType
+        obj = container.varTable.Get('%obj%')
+
+        # HOIL array is internally a dict() for now.
+        # TODO: Refactor returnVal
+        self.container.returnVal.append(
+            {0: obj.Get().x, 1: obj.Get().y, 2: obj.Get().z})
+
+
+
+
 
 
 

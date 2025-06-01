@@ -10,6 +10,14 @@ from math import pi
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 
+class SceneObject:
+    def __init__(self, id: str, x= 0.0, y= 0.0, z= 0.0):
+        self.id = id
+        self.x = x
+        self.y = y
+        self.z = z
+
+
 class RobotArm:
     def __init__(self):
         # Initialise components for Kinova arm
@@ -20,12 +28,24 @@ class RobotArm:
         self.gripper_group = moveit_commander.MoveGroupCommander('gripper')
         self.arm_pose = Pose()
 
+        self.eef_link = self.arm_group.get_end_effector_link()
         self.InitialiseDemo()
         print(self.arm_group.get_planning_frame())
         print(self.arm_group.get_end_effector_link())
         print(self.robot.get_group_names())
         print(self.arm_group.get_current_joint_values())
         print(self.robot.get_joint_names('arm'))
+
+
+        # self.arm_group.detach_object()
+        # self.MoveTo(0.0, 0.5, 0.45)
+        # self.CloseGripper()
+        # self.arm_group.attach_object('obj', self.eef_link)
+
+        # self.MoveTo(0.5, 0.0, 0.5)
+        # self.arm_group.detach_object()
+
+
 
 
 
@@ -54,10 +74,10 @@ class RobotArm:
         self.OpenGripper()
 
         # Rotate the arm gripper
-        g = self.arm_group.get_current_joint_values()
-        g[5] = -1.57 # list of len = 6, last index is the rotation of the gripper
+        # g = self.arm_group.get_current_joint_values()
+        # g[5] = -1.57 # list of len = 6, last index is the rotation of the gripper
 
-        self.arm_group.go(g, wait= True)
+        # self.arm_group.go(g, wait= True)
 
         return self.arm_pose
     
@@ -108,19 +128,19 @@ class RobotArm:
     def InitialiseDemoScene(self):
         self.scene.clear()
 
-        # Right in front
-        tablePose = PoseStamped()
-        tablePose.header.frame_id = 'root'
-        tablePose.pose.position.x = 0.5
-        tablePose.pose.position.y = 0.0
-        tablePose.pose.position.z = 0.2
+        # # Right in front
+        # tablePose = PoseStamped()
+        # tablePose.header.frame_id = 'root'
+        # tablePose.pose.position.x = 0.5
+        # tablePose.pose.position.y = 0.0
+        # tablePose.pose.position.z = 0.2
 
-        # Left
-        tablePose2 = PoseStamped()
-        tablePose2.header.frame_id = 'root'
-        tablePose2.pose.position.x = 0.0
-        tablePose2.pose.position.y = 0.5
-        tablePose2.pose.position.z = 0.2
+        # # Left
+        # tablePose2 = PoseStamped()
+        # tablePose2.header.frame_id = 'root'
+        # tablePose2.pose.position.x = 0.0
+        # tablePose2.pose.position.y = 0.5
+        # tablePose2.pose.position.z = 0.2
 
         objPose = PoseStamped()
         objPose.header.frame_id = 'root'
@@ -130,6 +150,6 @@ class RobotArm:
 
 
 
-        self.scene.add_box('table1', tablePose, [0.2, 0.4, 0.4])
-        self.scene.add_box('table2', tablePose2, [0.4, 0.2, 0.4])
+        # self.scene.add_box('table1', tablePose, [0.2, 0.4, 0.4])
+        # self.scene.add_box('table2', tablePose2, [0.4, 0.2, 0.4])
         self.scene.add_box('obj', objPose, [0.02, 0.02, 0.1])

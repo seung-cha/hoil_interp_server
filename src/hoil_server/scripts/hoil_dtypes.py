@@ -5,11 +5,16 @@ import re
 
 class DType:
     
-    def __init__(self, container:ExecVarContainer, expr:typing.Optional[str], paramDecl= False):
+    def __init__(self, container:ExecVarContainer, expr= None, paramDecl= False):
         self._assigned = False
         self._container = container
         self._expr = expr
         self._val = None
+
+
+        # If true, subsequent Assign is ignored.
+        # TODO: refactor this
+        self.fixed = False
 
         if self._expr is not None and not paramDecl:
             self.Assign(self._expr)
@@ -19,6 +24,10 @@ class DType:
         """
         Assign value by evaluating HOIL bytecode
         """
+
+        if self.fixed:
+            return
+        
         self._expr = expr
         self._assigned = True
         self._val = self._Eval()
@@ -56,3 +65,4 @@ class DType:
     
             return self._val
         
+
