@@ -14,6 +14,10 @@ def _AddOp(var1, var2):
 def _SubOp(var1, var2):
     return var1 - var2
 
+def _UnarySub(var1, var2):
+    # Conventional function params
+    return -var2
+
 def _MulOp(var1, var2):
     return var1 * var2
 
@@ -66,16 +70,18 @@ Ops = {
     '>=': lambda v1, v2: _GeqOp(v1, v2),
     '<': lambda v1, v2: _LtenOp(v1, v2),
     '<=': lambda v1, v2: _LeqOp(v1, v2),
+    '[': lambda v1, v2: _UnarySub(v1, v2),
 }
 
 
 class HoilExprLexeme:
-    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False, isFunc= False, isArr= False):
+    def __init__(self, spelling:str, value= None, isVar= False, isLiteral= False, isOp= False, isUnary= False, isFunc= False, isArr= False):
         self.spelling = spelling
         self.value = value
         self.isVar = isVar
         self.isLiteral = isLiteral
         self.isOp = isOp
+        self.isUnary = isUnary
         self.isFunc = isFunc
         self.isArr = isArr
 
@@ -226,7 +232,8 @@ class HoilExprLexer:
             return HoilExprLexeme(spelling, value= True if spelling == 'true' else False, isLiteral= True)
 
 
-        return HoilExprLexeme(spelling, isOp= True)
+        # [ is unary - in HOIL
+        return HoilExprLexeme(spelling, isOp= True, isUnary= spelling == '[')
     
 
 class VariableTable:
@@ -429,7 +436,12 @@ def EvaluateExpr(expr, container: ExecVarContainer) -> object:
             stack.append(var.Get())
         elif lex.isOp:
             var2 = stack.pop()
-            var1 = stack.pop()
+
+            # Handle Unary op
+            if lex.isUnary:
+                var1 = None
+            else:
+                var1 = stack.pop()
             val = Ops[lex.spelling](var1, var2)
             
             stack.append(val)
