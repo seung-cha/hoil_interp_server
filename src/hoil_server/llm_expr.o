@@ -1,0 +1,14 @@
+$decl %x% $real 0
+$instruct "Increment x by 5"
+$branch_begin
+$if $instruct "If x is 5"
+$open_scope
+$call %Print% "x is {x}!"
+$close_scope
+$if_end
+$else_begin
+$open_scope
+$call %Print% "x is not what it's supposed to be. {x}"
+$close_scope
+$else_end
+$branch_end

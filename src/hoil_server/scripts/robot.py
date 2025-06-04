@@ -10,12 +10,15 @@ from math import pi
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
 
+import random
+
 class SceneObject:
-    def __init__(self, id: str, x= 0.0, y= 0.0, z= 0.0):
+    def __init__(self, id: str, x= 0.0, y= 0.0, z= 0.0, height= 0.0):
         self.id = id
         self.x = x
         self.y = y
         self.z = z
+        self.height = height
 
 
 class RobotArm:
@@ -27,9 +30,9 @@ class RobotArm:
         self.arm_group = moveit_commander.MoveGroupCommander('arm')
         self.gripper_group = moveit_commander.MoveGroupCommander('gripper')
         self.arm_pose = Pose()
+        self.scene_objects = self.InitialiseDemo()
 
         self.eef_link = self.arm_group.get_end_effector_link()
-        self.InitialiseDemo()
         print(self.arm_group.get_planning_frame())
         print(self.arm_group.get_end_effector_link())
         print(self.robot.get_group_names())
@@ -47,11 +50,10 @@ class RobotArm:
 
 
 
-
-
     def InitialiseDemo(self):
-        self.InitialiseDemoScene()
+        o = self.InitialiseDemoScene()
         self.InitialRobotPose()
+        return o
 
     def InitialRobotPose(self) -> Pose:
         """Set the robot pose to the initial state"""
@@ -127,29 +129,23 @@ class RobotArm:
 
     def InitialiseDemoScene(self):
         self.scene.clear()
+        out = []
+        heights = random.sample(range(5), 5)
 
-        # # Right in front
-        # tablePose = PoseStamped()
-        # tablePose.header.frame_id = 'root'
-        # tablePose.pose.position.x = 0.5
-        # tablePose.pose.position.y = 0.0
-        # tablePose.pose.position.z = 0.2
+        for i in range(5):
+            id = 'obj' + str(i)
+            height = 0.05 + heights[i] * 0.1/5
+            x =  (0.7/5) * i - 0.7/2
+            y = 0.3
+            z = 0.3 + height / 2
 
-        # # Left
-        # tablePose2 = PoseStamped()
-        # tablePose2.header.frame_id = 'root'
-        # tablePose2.pose.position.x = 0.0
-        # tablePose2.pose.position.y = 0.5
-        # tablePose2.pose.position.z = 0.2
+            objPose = PoseStamped()
+            objPose.header.frame_id = 'root'
+            objPose.pose.position.x = x
+            objPose.pose.position.y = y
+            objPose.pose.position.z = z
+            self.scene.add_box(id, objPose, [0.02, 0.02, height])
 
-        objPose = PoseStamped()
-        objPose.header.frame_id = 'root'
-        objPose.pose.position.x = 0.0
-        objPose.pose.position.y = 0.5
-        objPose.pose.position.z = 0.4
-
-
-
-        # self.scene.add_box('table1', tablePose, [0.2, 0.4, 0.4])
-        # self.scene.add_box('table2', tablePose2, [0.4, 0.2, 0.4])
-        self.scene.add_box('obj', objPose, [0.02, 0.02, 0.1])
+            out.append(SceneObject(id= id, x= x, y= y, z= z, height= height))
+        
+        return out

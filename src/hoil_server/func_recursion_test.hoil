@@ -1,0 +1,20 @@
+define fibonacci(num) -> Number
+{
+    if num is 1
+    {
+        return 1
+    }
+    elif num <= 0
+    {
+        return 0
+    }
+
+    return fibonacci(num - 2) + fibonacci(num - 1)
+}
+
+result is fibonacci(8)
+call Print("8th fibonacci number is {result}")
+
+# Example of instruct statements:
+> "Move the arm close to the {cup}" # rejected due to fuzzy logic
+> "Move the arm 5cm above the center of {cup}" # Translated to corresponding Python code and executed.

@@ -1,0 +1,8 @@
+$decl %x% $real 0
+$while $instruct "while x is less than 10"
+$open_scope
+$call %Print% "Hi"
+$decl %x% $real %x%;1;+
+$close_scope
+$while_end
+$call %Print% "x is now {x}"

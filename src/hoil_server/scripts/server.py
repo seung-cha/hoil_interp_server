@@ -8,6 +8,13 @@ from hoil_dtypes import DType
 
 from robot import SceneObject
 
+# Given 5 sticks of different heights, sort them in ascending order on another table
+# The sticks are located at <0, 0.25 ~ 0.5, height / 2>, and they must be sorted at <0.25 ~ 0.5, 0, ...>
+# Boxes are stored in array 'boxes' (0 ~ 4), and height can be obtained via the function 'HeightOf'
+
+# TO FIX: variable assignment with array results in no type. Assign a type
+# If param and arg are identical, unexpected behaviour occurs.
+
 
 class HoilServer:
 
@@ -41,14 +48,20 @@ class HoilServer:
         FunctionNode.MakeFunction(self.container, 'PositionOf', ['obj'],\
                                   NativeNode(self.container, self.PositionOf))
         
-
-        obj = DType(self.container)
-        obj.fixed = True
-        obj.AssignValue(SceneObject(id= 'obj', x= 0.0, y= 0.5, z= 0.4))
-        self.container.varTable.Insert('%cube%', obj)
-
-
+        FunctionNode.MakeFunction(self.container, 'HeightOf', ['obj'],\
+                                  NativeNode(self.container, self.HeightOf))
         
+
+        # Add an array that contains 5 unordered sticks
+        boxObjs = {}
+        for i in range(len(self.container.robot.scene_objects)):
+            # dtype = DType(self.container, fixed= True)
+            # dtype.AssignValue(self.container.robot.scene_objects[i])
+            boxObjs[i] = self.container.robot.scene_objects[i]
+        
+        box_arr = DType(self.container, fixed= True, directAssignment= True, expr= boxObjs)
+        self.container.varTable.Insert("%boxes%", box_arr)
+                    
         #self.container.robot.InitialiseDemo()
         self.container.instructTable.Evaluate()
         print('Executing...')
@@ -73,6 +86,7 @@ class HoilServer:
         y = container.varTable.Get("%y%")
         z = container.varTable.Get("%z%")
 
+        print(f'Move to {x.Get()}, {y.Get()}, {z.Get()}')
         container.robot.MoveTo(x.Get(), y.Get(), z.Get())
 
     def MoveBy(self, container: HoilUtils.ExecVarContainer):
@@ -84,6 +98,7 @@ class HoilServer:
         y = container.varTable.Get("%y%")
         z = container.varTable.Get("%z%")
 
+        print(f'Move by {x.Get()}, {y.Get()}, {z.Get()}')
         container.robot.MoveBy(x.Get(), y.Get(), z.Get())
 
     def Grab(self, container: HoilUtils.ExecVarContainer):
@@ -116,6 +131,19 @@ class HoilServer:
         # TODO: Refactor returnVal
         self.container.returnVal.append(
             {0: obj.Get().x, 1: obj.Get().y, 2: obj.Get().z})
+        
+    def HeightOf(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Get the height of object"""
+        obj: DType
+        obj = container.varTable.Get('%obj%')
+
+        # TODO: Specify type in llm-based function calling so it doesnt confuse obj with str
+        if isinstance(obj.Get(), str):
+            obj = container.varTable.Get(f'%{obj.Get()}%')
+        
+        # HOIL array is internally a dict() for now.
+        # TODO: Refactor returnVal
+        self.container.returnVal.append(obj.Get().height)
 
 
 

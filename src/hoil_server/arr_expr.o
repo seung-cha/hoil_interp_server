@@ -1,0 +1,5 @@
+$decl %x% $array 
+$insert %x% 1 1
+$insert %x% 2 2
+$insert %x% $a,%x%,1$^;$a,%x%,2$^;+ 3
+$call %Print% $a,%x%,3$^

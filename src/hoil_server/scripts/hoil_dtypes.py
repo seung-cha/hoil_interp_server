@@ -50,7 +50,7 @@ class DType:
     def Get(self):
         # TODO: Raise error on use-before-assignment
         if self._val is None:
-            raise Exception
+            raise Exception(f"Use of variable before assignment!")
         else:
             # if it's string, interpolate.
             if isinstance(self._val, str):

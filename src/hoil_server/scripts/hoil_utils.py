@@ -147,14 +147,18 @@ class HoilExprLexer:
             else:
                 if queue[0] == '$':
                     if len(queue) >= 2 and queue[1] == '^':
+                        
+                        if level > 0:
+                            arg += '$^'
+                        queue.popleft()
+                        queue.popleft()
                         level -= 1
-                        queue.popleft()
-                        queue.popleft()
                     else:
                         level += 1
-                        queue.popleft()
+                        arg += queue.popleft()
                 else:
                     arg += queue.popleft()
+                
 
 
         
@@ -406,7 +410,6 @@ class ExecVarContainer:
 
 
 def EvaluateExpr(expr, container: ExecVarContainer) -> object:
-
     stack = deque()
     lexer = HoilExprLexer(expr)
     while True:

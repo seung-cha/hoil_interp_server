@@ -1,0 +1,35 @@
+$decl %boxes% $array 
+$decl %numBoxes% $real 5
+$decl %numSorted% $real 0
+$decl %lowBound% $real 999999;1;2;-;*
+$while %numSorted%;%numBoxes%;<
+$open_scope
+$decl %count% $real 0
+$decl %index% $real 0
+$decl %minHeight% $real 9999999
+$while %count%;%numBoxes%;<
+$open_scope
+$decl %height% $real $,%HeightOf%,$a,%boxes%,%count%$^$^
+$branch_begin
+$if %height%;%lowBound%;>;%height%;%minHeight%;<;&&
+$open_scope
+$decl %minHeight% $real %height%
+$decl %index% $real %count%
+$close_scope
+$if_end
+$branch_end
+$decl %count% $real %count%;1;+
+$close_scope
+$while_end
+$decl %lowBound% $real %minHeight%
+$decl %nextBox% $void $a,%boxes%,%index%$^
+$decl %xPos% $real 0.7;%numBoxes%;/;%numSorted%;*;0.7;2;/;-
+$call %Print% "Value of x for iteration {numSorted}: {xPos}"
+$decl %boxLocation% $array $,%PositionOf%,%nextBox%$^
+$call %MoveTo% $a,%boxLocation%,0$^,$a,%boxLocation%,1$^,$a,%boxLocation%,2$^;0.05;+
+$call %Grab% %nextBox%
+$call %MoveTo% %xPos%,1.7;2;-,0.5;$,%HeightOf%,%nextBox%$^;2;/;+
+$call %Release% 
+$decl %numSorted% $real %numSorted%;1;+
+$close_scope
+$while_end
