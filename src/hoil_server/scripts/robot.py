@@ -58,7 +58,9 @@ class RobotArm:
     def InitialRobotPose(self) -> Pose:
         """Set the robot pose to the initial state"""
         p = Pose()
-        q = quaternion_from_euler(0, pi, pi/2)
+        #q = quaternion_from_euler(0, pi, pi/2)
+        q = quaternion_from_euler(0, 0, pi/2)
+
 
         p.orientation.x = q[0]
         p.orientation.y = q[1]
@@ -130,22 +132,4 @@ class RobotArm:
     def InitialiseDemoScene(self):
         self.scene.clear()
         out = []
-        heights = random.sample(range(5), 5)
-
-        for i in range(5):
-            id = 'obj' + str(i)
-            height = 0.05 + heights[i] * 0.1/5
-            x =  (0.7/5) * i - 0.7/2
-            y = 0.3
-            z = 0.3 + height / 2
-
-            objPose = PoseStamped()
-            objPose.header.frame_id = 'root'
-            objPose.pose.position.x = x
-            objPose.pose.position.y = y
-            objPose.pose.position.z = z
-            self.scene.add_box(id, objPose, [0.02, 0.02, height])
-
-            out.append(SceneObject(id= id, x= x, y= y, z= z, height= height))
-        
         return out
