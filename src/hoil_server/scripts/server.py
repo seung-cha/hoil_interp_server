@@ -29,33 +29,46 @@ class HoilServer:
         self.container = HoilUtils.ExecVarContainer(noROS= False)
 
         # Insert functions
-        FunctionNode.MakeFunction(self.container, 'Print', ['text'],\
+        FunctionNode.MakeFunction(self.container, 'Print', ['text'], ['str'],\
                                   NativeNode(self.container, self.Print))
         
-        FunctionNode.MakeFunction(self.container, 'MoveTo', ['x', 'y', 'z'],\
+        FunctionNode.MakeFunction(self.container, 'MoveTo', ['x', 'y', 'z'], ['real', 'real', 'real'],\
                                   NativeNode(self.container, self.MoveTo))
         
-        FunctionNode.MakeFunction(self.container, 'MoveBy', ['x', 'y', 'z'],\
+        FunctionNode.MakeFunction(self.container, 'MoveBy', ['x', 'y', 'z'], ['real', 'real', 'real'],\
                                   NativeNode(self.container, self.MoveBy))
         
-        FunctionNode.MakeFunction(self.container, 'Grab', ['obj'],\
+        FunctionNode.MakeFunction(self.container, 'Grab', ['obj'], ['obj'],\
                                   NativeNode(self.container, self.Grab))
         
-        FunctionNode.MakeFunction(self.container, 'Release', [],\
+        FunctionNode.MakeFunction(self.container, 'Release', [], [],\
                                   NativeNode(self.container, self.Release))
         
-        FunctionNode.MakeFunction(self.container, 'PositionOf', ['obj'],\
+        FunctionNode.MakeFunction(self.container, 'PositionOf', ['obj'], ['obj'],\
                                   NativeNode(self.container, self.PositionOf))
         
-        FunctionNode.MakeFunction(self.container, 'HeightOf', ['obj'],\
+        FunctionNode.MakeFunction(self.container, 'HeightOf', ['obj'], ['obj'],\
                                   NativeNode(self.container, self.HeightOf))
         
         self.node = BuildExecNode(data, self.container)
 
 
+        # Add an array that contains 5 unordered sticks
+        boxObjs = {}
+        for i in range(len(self.container.robot.scene_objects)):
+            boxObjs[i] = self.container.robot.scene_objects[i]
+        
+        box_arr = DType(self.container, fixed= True, directAssignment= True, expr= boxObjs)
+        self.container.varTable.Insert("%sticks%", box_arr)
+                    
+        self.container.robot.InitialiseDemo()
+
+
         self.container.instructTable.Evaluate()
+
         print('Executing...')
         print('-' * 100)
+        
         node = self.node
         while node is not None:
             node.Run()

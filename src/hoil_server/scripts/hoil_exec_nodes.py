@@ -271,12 +271,14 @@ class FunctionNode(ExecNode):
 
         self.container.instructTable.InsertFunction(self)
 
-        p = [s.spelling.strip('%') if s.type == '' else '%s:%s' % (s.spelling.strip('%'), s.type.strip('$')) for s in param]
-        param_str = ','.join(p)
-        self.container.symbolTable.InsertFunction('%s(%s)' % (ident.strip('%'), param_str))
+
+        # Insert into symbol table
+        self.container.symbolTable.InsertFunction(str(self))
 
     def __str__(self):
-        return self.ident.strip('%')
+        p = [str(param) for param in self.paramNodes]
+        param_str = ', '.join(p)
+        return f"{self.ident.strip('%')}({param_str})"
 
         # Register function
     def Run(self):
@@ -302,14 +304,14 @@ class FunctionNode(ExecNode):
         self.container.currentFunc = prevFunc
         self.container.varTable.Pop()
 
-    def MakeFunction(container: ExecVarContainer, ident: str, param: list, body: ExecNode):
+    def MakeFunction(container: ExecVarContainer, ident: str, param: list, types: list, body: ExecNode):
         """Make function and return pointer, after inserting it to the table. feed list of non-mangled names in param"""
         p = []
 
         # Native functions need not have variables declared in the symbol table
         container.symbolTable.Push()
-        for id in param:
-            p.append(DeclNode(container= container, spelling= f'%{id}%', type= '', expr= None))
+        for i in range(len(param)):
+            p.append(DeclNode(container= container, spelling= f'%{param[i]}%', type= f'${types[i]}', expr= None))
         
         container.symbolTable.Pop() 
         f = FunctionNode(container, f'%{ident}%', p, body)
