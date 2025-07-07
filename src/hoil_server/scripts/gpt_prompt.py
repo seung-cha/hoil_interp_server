@@ -34,7 +34,8 @@ Provide your answer in a form of Json array {id, exec}, where id is the id of th
 Do not write anything other than json string.
 
 In addition to the sentence to be translated, there will be two more fields: {variables, functions}. Each field represents the available variables and functions you can access when translating the sentence.
-A variable in vars is defined as name: type, where name refers to the name of the variable and type can be one of {array, real, bool, str}. Refer to the type hinting to get an understanding of which variable to use.
+A variable in vars is defined as name: type, where name refers to the name of the variable and type can be one of {real, string, array, object, flex}. Refer to the type hinting to get an understanding of which variable to use.
+flex is a special type that can be any of the types described as before. Use the variable name to guess the appropriate type.
 
 
 """
