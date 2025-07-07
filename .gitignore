@@ -56,3 +56,4 @@ venv/
 #vscode
 **/.vscode
 
+cache.json
