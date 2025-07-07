@@ -44,10 +44,10 @@ class DeclNode(ExecNode):
         self.directAssignment = directAssignment
 
 
-        self.container.symbolTable.InsertVariable(spelling.strip('%'))
+        self.container.symbolTable.InsertVariable(str(self))
 
     def __str__(self):
-        return f"{self.spelling.strip('%')}: {self.type}"
+        return f"{self.spelling.strip('%')}: {self.type.strip('$')}"
 
     def Run(self):
         # TODO: Create different var types based on the supplied type
@@ -243,7 +243,8 @@ class InstructNode(ExecNode):
     def ValueOf(self, spelling: str, index= None):
 
         if index is not None:
-            return self.container.varTable.Get(f'%{spelling}%').Get()[index]
+            print(f'Accessing array at index: {index} of {spelling}')
+            return self.container.varTable.Get(f'%{spelling}%').Get()[int(index)]
         return self.container.varTable.Get(f'%{spelling}%').Get()
     
     # Call function (non-mangled spelling) with params

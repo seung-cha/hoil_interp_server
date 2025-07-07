@@ -26,7 +26,7 @@ class HoilServer:
             data = f.read()
 
 
-        self.container = HoilUtils.ExecVarContainer(noROS= True)
+        self.container = HoilUtils.ExecVarContainer(noROS= False)
 
         # Insert functions
         FunctionNode.MakeFunction(self.container, 'Print', ['text'],\
@@ -52,19 +52,7 @@ class HoilServer:
         
         self.node = BuildExecNode(data, self.container)
 
-        
 
-        # Add an array that contains 5 unordered sticks
-        # boxObjs = {}
-        # for i in range(len(self.container.robot.scene_objects)):
-        #     # dtype = DType(self.container, fixed= True)
-        #     # dtype.AssignValue(self.container.robot.scene_objects[i])
-        #     boxObjs[i] = self.container.robot.scene_objects[i]
-        
-        # box_arr = DType(self.container, fixed= True, directAssignment= True, expr= boxObjs)
-        # self.container.varTable.Insert("%boxes%", box_arr)
-                    
-        #self.container.robot.InitialiseDemo()
         self.container.instructTable.Evaluate()
         print('Executing...')
         print('-' * 100)

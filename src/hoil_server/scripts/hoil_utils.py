@@ -352,8 +352,6 @@ class InstructTable:
 
         funcs = list(container.functionMap.keys())
         vars, funcs = container.symbolTable.Get()
-
-        print(f'Funcs: {funcs}, vars: {vars}')
         
         self._in_stmt.append([bytecode, vars, funcs])
         return len(self._in_stmt) - 1
@@ -385,34 +383,32 @@ class InstructTable:
                 
                 # Remove all matched in stmts
                 for stmt in removeList:
-                    print(f'InstructTable:: remove: {stmt}')
+                    print(f'\n\nInstructTable:: remove: {stmt}\n\n')
                     self._in_stmt.remove(stmt)
 
         except Exception as e:
-            print('InstructTable:: Error occurred while reading in cache: ')
+            print('\n\nInstructTable:: Error occurred while reading in cache: ')
             print(e)
 
 
         if len(self._in_stmt) == 0:
-            print('InstructTable:: all hit the cache!')
+            print('\n\nInstructTable:: all hit the cache!')
             return
-
-        # Construct function description
-        func_desc = [ {'name': str(function), 'params':  ', '.join(map(str, function.paramNodes)) } for function in self._func ]
-        func_desc_json = json.dumps(func_desc)
-        #print(prompt + func_desc_json)
-
 
         # Convert the remaining list into json and feed it to gpt
         dic =  [ {'id': i, 'stmt': self._in_stmt[i][0], 'variables': self._in_stmt[i][1], 'functions': self._in_stmt[i][2]} for i in range(len(self._in_stmt)) ]
         json_dic = json.dumps(dic)
+
+        print('\n\n\n\n\n')
+        print(json.dumps(dic, indent=2))
+        print('\n\n\n\n\n')
 
         client = OpenAI()
         res = client.chat.completions.create(
             model= 'gpt-4',
             messages= [
                 { 'role': 'system',
-                'content': prompt + func_desc_json
+                'content': prompt
                 },
                 {
                     'role': 'user',

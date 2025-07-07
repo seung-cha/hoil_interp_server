@@ -23,9 +23,6 @@ For all array expression, you must provide a value for the optional field 'index
 For example:
 self.Assign('arr', 0, index= 0) # arr[0] = 0
 self.Decl('arr2, 'hello world!', index= 12 + 25) # arr[12 + 25] = 'hello world!'
-self.ValueOf('arr3', index= 'hi') # arr3['hi']
-
-Note for the last expression the index type was string. This is allowed. In fact, index can carry any data type therefore be flexible when it comes to calculating value for index.
 
 Note the self.value = ...- For expressions that may result in a value (and conditional, loop boolean expressions), you must store the value in self.value.
 Sentences may appear to be conditional, loop, assignment, or expression.
@@ -36,5 +33,8 @@ you ONLY write one Python expression and it MUST BE self-contained. Rule of thum
 Provide your answer in a form of Json array {id, exec}, where id is the id of the expression (should be equal to the input id) and exec is a string of your translation in Python-expression.
 Do not write anything other than json string.
 
-You may use the following functions (in addition to the four functions to access variables and functions) to achieve your goal:
+In addition to the sentence to be translated, there will be two more fields: {variables, functions}. Each field represents the available variables and functions you can access when translating the sentence.
+A variable in vars is defined as name: type, where name refers to the name of the variable and type can be one of {array, real, bool, str}. Refer to the type hinting to get an understanding of which variable to use.
+
+
 """
