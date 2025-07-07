@@ -1,1 +1,5 @@
-{"\"Set {pos} by calling PositionOf with {cube}\"": "self.Assign('pos', self.Call('PositionOf', ['cube']))", "\"Move to <pos[0], pos[1] and finally, pos[2] + 0.05>\"": "self.Call('MoveTo', [self.ValueOf('pos')[0], self.ValueOf('pos')[1], self.ValueOf('pos')[2] + 0.05])", "\"Grab the cube\"": "self.Call('Grab', ['cube'])", "\"Move back to <0.5, 0.0, 0.4>\"": "self.Call('MoveTo', [0.5, 0.0, 0.4])", "\"Release\"": "self.Call('Release', [])", "\"Move by 0.1 above\"": "self.Call('MoveBy', [0, 0, 0.1])"}
+{
+ "\"Repeat as long as there are boxes\"": "self.value = self.ValueOf('boxesRemaining') > 0",
+ "\"Say: 'Another one bites the dust'\"": "self.Call('Print', ['Another one bites the dust'])",
+ "\"There is one less box now\"": "self.Assign('boxesRemaining', self.ValueOf('boxesRemaining') - 1)"
+}

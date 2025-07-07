@@ -236,6 +236,37 @@ class HoilExprLexer:
         return HoilExprLexeme(spelling, isOp= True, isUnary= spelling == '[')
     
 
+
+class SymbolTable:
+    """Variable and function definitions"""
+    def __init__(self):
+        self._stack = deque()
+        self.Push()
+    
+    def Push(self):
+        self._stack.append({'func': [], 'var': []})
+    
+    def Pop(self):
+        self._stack.pop()
+
+    def InsertVariable(self, var):
+        self._stack[len(self._stack) - 1]['var'].append(var)
+
+    def InsertFunction(self, func):
+        self._stack[len(self._stack) - 1]['func'].append(func)
+
+    def Get(self):
+        funcs = []
+        vars = []
+
+        for entry in self._stack:
+            funcs.extend(entry['func'])
+            vars.extend(entry['var'])
+        
+        return (vars, funcs)
+
+    
+
 class VariableTable:
 
     def __init__(self):
@@ -276,6 +307,12 @@ class VariableTable:
     
     def GetTempName(self) -> str:
         return self._stack[len(self.stack) - 1].GetTempName()
+    
+    def GetAllVariables(self) -> list:
+        arr = []
+        for scope in self._stack:
+            arr.extend(scope.ToList())
+        return arr
 
 
 class _VarScope:
@@ -296,6 +333,9 @@ class _VarScope:
         self._tempCtr = self._tempCtr + 1
         return s
     
+    def ToList(self) -> list:
+        return list(self._table.keys())
+    
 
 class InstructTable:
     def __init__(self):
@@ -306,10 +346,16 @@ class InstructTable:
     def InsertFunction(self, function):
         self._func.append(function)
     
-    def Insert(self, bytecode: str) -> int:
+    def Insert(self, bytecode: str, container) -> int:
         """Insert raw instruct stmt into the array for batch-evaluation.
         Return index id to retrieve execution code."""
-        self._in_stmt.append(bytecode)
+
+        funcs = list(container.functionMap.keys())
+        vars, funcs = container.symbolTable.Get()
+
+        print(f'Funcs: {funcs}, vars: {vars}')
+        
+        self._in_stmt.append([bytecode, vars, funcs])
         return len(self._in_stmt) - 1
     
     def Get(self, index: int) -> str:
@@ -333,14 +379,15 @@ class InstructTable:
                 
                 removeList = []
                 for i in range(len(self._in_stmt)):
-                    if self._in_stmt[i] in cache.keys():
-                        self._out_stmt[i] = cache[self._in_stmt[i]]
+                    if self._in_stmt[i][0] in cache.keys():
+                        self._out_stmt[i] = cache[self._in_stmt[i][0]]
                         removeList.append(self._in_stmt[i])
                 
                 # Remove all matched in stmts
                 for stmt in removeList:
                     print(f'InstructTable:: remove: {stmt}')
                     self._in_stmt.remove(stmt)
+
         except Exception as e:
             print('InstructTable:: Error occurred while reading in cache: ')
             print(e)
@@ -357,7 +404,7 @@ class InstructTable:
 
 
         # Convert the remaining list into json and feed it to gpt
-        dic =  [ {'id': i, 'stmt': self._in_stmt[i]} for i in range(len(self._in_stmt)) ]
+        dic =  [ {'id': i, 'stmt': self._in_stmt[i][0], 'variables': self._in_stmt[i][1], 'functions': self._in_stmt[i][2]} for i in range(len(self._in_stmt)) ]
         json_dic = json.dumps(dic)
 
         client = OpenAI()
@@ -379,19 +426,21 @@ class InstructTable:
         # Append the chatgpt-generated responses to the cache
         for obj in res_dic:
             self._out_stmt[obj['id']] = obj['exec']
-            cache[self._in_stmt[obj['id']]] = obj['exec']
+            cache[self._in_stmt[obj['id']][0]] = obj['exec']
         
         with open('cache.json', 'w') as f:
-            json.dump(cache, f)
+            json.dump(cache, f, indent= 1)
 
 
     def Warn(self):
         print('InstructTable:: Warn() is called. Check the instruct stmt to make sure it is logical.')
 
 
+
 class ExecVarContainer:
     def __init__(self, robot: RobotArm = None, instructTable: InstructTable = None, functionMap: dict = None, noROS= False):
-        self.varTable = VariableTable() 
+        self.varTable = VariableTable()
+        self.symbolTable = SymbolTable()
         self.loopStack = deque()
         self.currentFunc = None
         self.noROS = noROS

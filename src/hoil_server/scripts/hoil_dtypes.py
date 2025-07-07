@@ -36,13 +36,21 @@ class DType:
         self._assigned = True
         self._val = self._Eval()
 
-    def AssignValue(self, val):
+    def AssignValue(self, val, index= None):
         """
-        Directly set the value. Useful for LLM-based writing
+        Directly set the value. Useful for LLM-based writing.
+        if index is provided, insert the value at that index (for initialisation, create a new dict)
         """
         if val is not None:
             self._assigned = True
-        self._val = val
+
+        if index is not None:
+            if self._val is None:
+                self._val = dict()
+            
+            self._val[index] = val
+        else:
+            self._val = val
 
     def _Eval(self) -> object:
         return EvaluateExpr(self._expr, self._container)

@@ -107,7 +107,9 @@ class ScopedNodeBuilder(ExecNodeBuilder):
         
         stack.popleft()
         scopedNode = ScopedNode(self.container)
+        self.container.symbolTable.Push()
         scopedNode.node = _BuildExecNode(stack, self.container)
+        self.container.symbolTable.Pop()
         stack.popleft()
 
         return scopedNode

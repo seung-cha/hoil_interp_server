@@ -43,8 +43,11 @@ class DeclNode(ExecNode):
         # If true, assign value with AssignValue() instead of Assign(). Used for param decl in llm-based function calling
         self.directAssignment = directAssignment
 
+
+        self.container.symbolTable.InsertVariable(spelling.strip('%'))
+
     def __str__(self):
-        return self.spelling.strip('%')
+        return f"{self.spelling.strip('%')}: {self.type}"
 
     def Run(self):
         # TODO: Create different var types based on the supplied type
@@ -207,7 +210,7 @@ class InstructNode(ExecNode):
     def __init__(self, container: ExecVarContainer, stmt: str):
         super().__init__(container)
         self.stmt = stmt
-        self.id = self.container.instructTable.Insert(stmt)
+        self.id = self.container.instructTable.Insert(stmt, container)
         self.value = None
 
     def Run(self):
@@ -219,24 +222,28 @@ class InstructNode(ExecNode):
     
     # Used to declare variable
     # TODO: Modulate. current code copied from DeclNode.Run()
-    def Decl(self, spelling: str, val= None):
+    def Decl(self, spelling: str, val= None, index= None):
         var: DType
         var = self.container.varTable.Get(f'%{spelling}%', topLevelOnly= False)
 
         if var is not None:
-            var.AssignValue(val)
+            var.AssignValue(val, index= index)
         else:
             dtype = DType(self.container, expr= val, directAssignment= True)
             self.container.varTable.Insert(f'%{spelling}%', dtype)
 
     # Used to set variable
     # Identical to Decl(). Exists for LLM
-    def Assign(self, spelling: str, val):
-        self.Decl(spelling, val)
+    def Assign(self, spelling: str, val, index= None):
+        self.Decl(spelling, val, index= index)
+
 
     # Used to get value.
     # Assumes variable is declared and is not mangled
-    def ValueOf(self, spelling: str):
+    def ValueOf(self, spelling: str, index= None):
+
+        if index is not None:
+            return self.container.varTable.Get(f'%{spelling}%').Get()[index]
         return self.container.varTable.Get(f'%{spelling}%').Get()
     
     # Call function (non-mangled spelling) with params
@@ -262,6 +269,10 @@ class FunctionNode(ExecNode):
         self.paramNodes = param
 
         self.container.instructTable.InsertFunction(self)
+
+        p = [s.spelling.strip('%') if s.type == '' else '%s:%s' % (s.spelling.strip('%'), s.type.strip('$')) for s in param]
+        param_str = ','.join(p)
+        self.container.symbolTable.InsertFunction('%s(%s)' % (ident.strip('%'), param_str))
 
     def __str__(self):
         return self.ident.strip('%')
@@ -293,10 +304,17 @@ class FunctionNode(ExecNode):
     def MakeFunction(container: ExecVarContainer, ident: str, param: list, body: ExecNode):
         """Make function and return pointer, after inserting it to the table. feed list of non-mangled names in param"""
         p = []
+
+        # Native functions need not have variables declared in the symbol table
+        container.symbolTable.Push()
         for id in param:
             p.append(DeclNode(container= container, spelling= f'%{id}%', type= '', expr= None))
+        
+        container.symbolTable.Pop() 
         f = FunctionNode(container, f'%{ident}%', p, body)
+
         f.Run()
+
         return f
 
     

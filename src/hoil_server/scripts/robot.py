@@ -60,6 +60,7 @@ class RobotArm:
         p = Pose()
         q = quaternion_from_euler(0, pi, pi/2)
 
+
         p.orientation.x = q[0]
         p.orientation.y = q[1]
         p.orientation.z = q[2]
