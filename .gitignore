@@ -57,3 +57,7 @@ venv/
 **/.vscode
 
 cache.json
+
+# HOIL scripts (.il, .o)
+*.il
+*.o
