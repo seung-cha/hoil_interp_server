@@ -4,3 +4,7 @@
 [submodule "src/moveit_tutorials"]
 	path = src/moveit_tutorials
 	url = https://github.com/moveit/moveit_tutorials.git
+[submodule "src/turtlebot3_simulations"]
+	path = src/turtlebot3_simulations
+	url = https://github.com/ROBOTIS-GIT/turtlebot3_simulations.git
+	branch = noetic
