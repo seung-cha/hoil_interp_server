@@ -132,7 +132,7 @@ class HoilServer:
         s = container.varTable.Get('%dist%').Get()
         self.container.returnVal.append(self.container.robot.SenseRight(s))
 
-    def SenseRight(self, container: HoilUtils.ExecVarContainer):
+    def SenseForward(self, container: HoilUtils.ExecVarContainer):
         """Native function. Stop the robot's movement"""
         s: DType
         s = container.varTable.Get('%dist%').Get()
