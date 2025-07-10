@@ -48,6 +48,9 @@ class HoilServer:
         FunctionNode.MakeFunction(self.container, 'StopAllAction', [], [],\
                                   NativeNode(self.container, self.Stop))
         
+        FunctionNode.MakeFunction(self.container, 'DistanceAt', ['angle'], ['real'],\
+                                  NativeNode(self.container, self.GetSensorReading))
+        
         
         
         self.node = BuildExecNode(data, self.container)
@@ -61,6 +64,7 @@ class HoilServer:
         print('-' * 100)
         
         node = self.node
+
         while node is not None:
             node.Run()
             node = node.next
@@ -93,6 +97,14 @@ class HoilServer:
         s: DType
         s = container.varTable.Get('%speed%').Get()
         container.robot.RotateRight(s)
+    
+    def GetSensorReading(self, container:HoilUtils.ExecVarContainer):
+        """Native function. Get the sensor data"""
+        s: DType
+        s = container.varTable.Get('%angle%').Get()
+        value = container.robot.GetSensorData(s)
+
+        self.container.returnVal.append(value)
 
     def Stop(self, container: HoilUtils.ExecVarContainer):
         """Native function. Stop the robot's movement"""
