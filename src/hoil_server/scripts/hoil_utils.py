@@ -3,7 +3,7 @@ from robot import RobotArm
 import typing
 from openai import OpenAI
 import json
-from gpt_prompt import prompt
+from gpt_prompt import prompt, contextual_information
 from copy import deepcopy
 
 
@@ -408,7 +408,7 @@ class InstructTable:
             model= 'gpt-4',
             messages= [
                 { 'role': 'system',
-                'content': prompt
+                'content': prompt + contextual_information
                 },
                 {
                     'role': 'user',
