@@ -124,7 +124,7 @@ class LoopNodeBuilder(ExecNodeBuilder):
         if line[0] != '$while':
             return None
 
-        if line[1] == '$instruct':
+        if len(line) >= 2 and line[1] == '$instruct':
             cond = InstructNode(self.container, line[2])
         else:
 
@@ -134,7 +134,6 @@ class LoopNodeBuilder(ExecNodeBuilder):
                 cond = ExprNode(self.container, line[1])
     
         stack.popleft()
-
         body = _BuildExecNode(stack, self.container)
 
         # Pop $while_end

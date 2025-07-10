@@ -85,6 +85,7 @@ class InsertNode(ExecNode):
         expr = EvaluateExpr(self.expr, self.container)
 
         self.container.varTable.Get(self.ident).Get()[index] = expr
+        return True
 
 
 class ExprNode(ExecNode):
@@ -182,21 +183,21 @@ class LoopNode(ExecNode):
                 break
 
             self.condNode.Run()
-
+            
             if self.condNode.value:
-                outcome = self.bodyNode.Run()
+                self.bodyNode.Run()
             else:
                 break
         
         self.container.loopStack.pop()
-        return outcome
+        return True
 
 class BreakNode(ExecNode):
     def __init__(self, container: ExecVarContainer):
         super().__init__(container)
 
     def Run(self):
-        self.container.loopStack[len(self.loopStack) - 1].shouldBreak = True
+        self.container.loopStack[len(self.container.loopStack) - 1].shouldBreak = True
         return False
     
 class ContinueNode(ExecNode):
