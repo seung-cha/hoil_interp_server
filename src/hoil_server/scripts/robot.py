@@ -74,21 +74,21 @@ class RobotArm:
     
     def SenseLeft(self, dist: float):
         for reading in self.readingsLeft:
-            if reading < dist:
+            if reading > dist:
                 return True
         
         return False
     
     def SenseRight(self, dist: float):
         for reading in self.readingsRight:
-            if reading < dist:
+            if reading > dist:
                 return True
         
         return False
     
     def SenseForward(self, dist: float):
         for reading in self.readingsForward:
-            if reading < dist:
+            if reading > dist:
                 return True
         
         return False
