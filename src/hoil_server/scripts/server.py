@@ -45,11 +45,21 @@ class HoilServer:
         FunctionNode.MakeFunction(self.container, 'RotateRight', ['speed'], ['real'],\
                                   NativeNode(self.container, self.RotateRight))
         
-        FunctionNode.MakeFunction(self.container, 'StopAllAction', [], [],\
+        FunctionNode.MakeFunction(self.container, 'Stop', [], [],\
                                   NativeNode(self.container, self.Stop))
         
         FunctionNode.MakeFunction(self.container, 'DistanceAt', ['angle'], ['real'],\
                                   NativeNode(self.container, self.GetSensorReading))
+        
+        FunctionNode.MakeFunction(self.container, 'SenseLeft', ['dist'], ['real'],\
+                                  NativeNode(self.container, self.SenseLeft))
+        
+        FunctionNode.MakeFunction(self.container, 'SenseRight', ['dist'], ['real'],\
+                                  NativeNode(self.container, self.SenseRight))
+        
+        FunctionNode.MakeFunction(self.container, 'SenseForward', ['dist'], ['real'],\
+                                  NativeNode(self.container, self.SenseForward))
+        
         
         
         
@@ -109,6 +119,26 @@ class HoilServer:
     def Stop(self, container: HoilUtils.ExecVarContainer):
         """Native function. Stop the robot's movement"""
         container.robot.StopAllAction()
+
+    def SenseLeft(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Stop the robot's movement"""
+        s: DType
+        s = container.varTable.Get('%dist%').Get()
+        self.container.returnVal.append(self.container.robot.SenseLeft(s))
+
+    def SenseRight(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Stop the robot's movement"""
+        s: DType
+        s = container.varTable.Get('%dist%').Get()
+        self.container.returnVal.append(self.container.robot.SenseRight(s))
+
+    def SenseRight(self, container: HoilUtils.ExecVarContainer):
+        """Native function. Stop the robot's movement"""
+        s: DType
+        s = container.varTable.Get('%dist%').Get()
+        self.container.returnVal.append(self.container.robot.SenseForward(s))
+
+
 
 
 
