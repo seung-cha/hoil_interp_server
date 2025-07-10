@@ -62,6 +62,9 @@ class RobotArm:
         self.vel_data = Twist()
         self.cmd_pub.publish(self.vel_data)
 
+    def GetSensorData(self, angle: float):
+        angle = int(angle)
+        return self.sensor_data.ranges[angle]
     
 
 
