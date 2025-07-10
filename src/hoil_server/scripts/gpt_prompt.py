@@ -37,5 +37,8 @@ In addition to the sentence to be translated, there will be two more fields: {va
 A variable in vars is defined as name: type, where name refers to the name of the variable and type can be one of {real, string, array, object, flex}. Refer to the type hinting to get an understanding of which variable to use.
 flex is a special type that can be any of the types described as before. Use the variable name to guess the appropriate type.
 
+In addition to those, here is the information you need to know:
+"""
 
+contextual_information = """
 """
