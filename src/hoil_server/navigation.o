@@ -1,0 +1,48 @@
+$decl %forwardSpeed% $real 0.3
+$decl %turnSpeed% $real 0.3
+$decl %forwardThreshold% $real 0.7
+$decl %leftThreshold% $real 1.5
+$decl %rightThreshold% $real 1.5
+$decl %moveForwardMode% $bool true
+$decl %turnRightMode% $bool false
+$while true
+$open_scope
+$branch_begin
+$if $instruct "If set to go forward"
+$open_scope
+$call %Print% "Moving Forward"
+$instruct "Move forward"
+$branch_begin
+$if $instruct "If the obstacle ahead is too close"
+$open_scope
+$call %Print% "Enabling Turning Mode"
+$instruct "Stop moving forward"
+$instruct "Disable moving forward mode"
+$instruct "Enable turn mode"
+$close_scope
+$if_end
+$branch_end
+$close_scope
+$if_end
+$branch_end
+$branch_begin
+$if $instruct "If set to turn"
+$open_scope
+$call %Print% "Turning Right"
+$instruct "Turn right"
+$branch_begin
+$if $instruct "If the obstacle to the robot's left is not too close"
+$open_scope
+$call %Print% "Enabling Turning Mode"
+$instruct "Stop turning"
+$instruct "Enable moving mode"
+$instruct "Disable turning mode"
+$close_scope
+$if_end
+$branch_end
+$close_scope
+$if_end
+$branch_end
+$instruct "Wait 0.1 seconds"
+$close_scope
+$while_end
