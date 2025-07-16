@@ -57,3 +57,5 @@ venv/
 **/.vscode
 
 cache.json
+# Bytecode
+**/*.o
