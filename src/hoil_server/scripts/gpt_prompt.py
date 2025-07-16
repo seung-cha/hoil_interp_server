@@ -41,4 +41,17 @@ In addition to those, here is the information you need to know:
 """
 
 contextual_information = """
+The user is controlling a wheeled robot in a maze-like room. Their goal is to create a navigation algorithm that safely drives the robot around the room.
+These are the functions provided to them:
+
+* Print(text: str) # Print to terminal, for debugging
+* Delay(second: real) # Block execution
+* Move(speed: real) # Drive the robot forward at the given speed. If -1, move back. If 0, stop.
+* RotateLeft(speed: real) # Rotate the robot left at given speed. Negative values are converted to positive. If 0, stop.
+* MoveRight(speed: real) # Rotate the robot right at given speed. Negative values are converted to positive. If 0, stop.
+* Stop() # Stop all actions, moving, and rotating.
+* DistanceAt(angle: real) # Sense the environment at given angle and return the distance between the robot and the obstacle.
+* SenseLeft(dist: real) # Sense the environment on the left. Return true if the obstacle is closer than the given distance
+* SenseRight(dist: real) # Sense the environment on the right. Return true if the obstacle is closer than the given distanece.
+* SenseForward(dist: real) # Sense the environment forward. Return true if the obstacle is closer than the given distance.
 """
